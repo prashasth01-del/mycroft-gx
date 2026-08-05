@@ -4,9 +4,9 @@ import { MycroftProvider, useMycroft } from "@/components/providers/mycroft-prov
 import { Sidebar } from "@/components/sidebar/sidebar"
 import { TopBar } from "@/components/topbar/topbar"
 import { ActionBar } from "@/components/action-bar/action-bar"
-import { HomeView } from "@/components/home/home-view"
+import { WorkspaceRouter } from "@/components/layout/workspace-router"
 import { CalendarPanel } from "@/components/calendar-panel/calendar-panel"
-import { PlaceholderView } from "@/components/layout/placeholder-view"
+import { CommandSurfaces } from "@/components/command/command-surfaces"
 
 function DashboardInner() {
   const { activeNav } = useMycroft()
@@ -22,7 +22,7 @@ function DashboardInner() {
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
           <main className="flex min-h-[440px] min-w-0 flex-1 flex-col gap-4 lg:min-h-0">
             <div key={activeNav} className="fade-view flex min-h-0 flex-1 flex-col">
-              {isHome ? <HomeView /> : <PlaceholderView nav={activeNav} />}
+              <WorkspaceRouter />
             </div>
             {isHome && <ActionBar />}
           </main>
@@ -31,6 +31,8 @@ function DashboardInner() {
           {isHome && <CalendarPanel />}
         </div>
       </div>
+
+      <CommandSurfaces />
     </div>
   )
 }
