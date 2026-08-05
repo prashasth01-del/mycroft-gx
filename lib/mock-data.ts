@@ -1,10 +1,4 @@
-import type {
-  CalendarEvent,
-  Device,
-  KnowledgeItem,
-  Note,
-  Task,
-} from "@/types"
+import type { CalendarEvent } from "@/types"
 
 // The dashboard defaults to this reference month so the mock schedule lines up.
 export const REFERENCE_DATE = new Date(2026, 4, 12) // May 12 2026
@@ -17,9 +11,6 @@ export const events: CalendarEvent[] = [
     start: "11:00 AM",
     end: "12:00 PM",
     accent: "violet",
-    location: "Conference Room A",
-    participants: ["Priya N.", "Marcus L.", "Dana W."],
-    notes: "Monthly strategy alignment and roadmap discussion.",
   },
   {
     id: "e2",
@@ -28,9 +19,6 @@ export const events: CalendarEvent[] = [
     start: "2:30 PM",
     end: "3:30 PM",
     accent: "plum",
-    location: "Studio 2",
-    participants: ["Design", "Eng"],
-    notes: "Walk through the v2 flows and open questions.",
   },
   {
     id: "e3",
@@ -39,8 +27,6 @@ export const events: CalendarEvent[] = [
     start: "7:00 PM",
     end: "8:30 PM",
     accent: "burgundy",
-    location: "Cafe Mori",
-    notes: "Catch up — pick somewhere quiet.",
   },
   {
     id: "e4",
@@ -49,8 +35,6 @@ export const events: CalendarEvent[] = [
     start: "10:00 AM",
     end: "11:00 AM",
     accent: "gold",
-    location: "Studio 2",
-    participants: ["Design"],
   },
   {
     id: "e5",
@@ -59,9 +43,6 @@ export const events: CalendarEvent[] = [
     start: "9:30 AM",
     end: "10:00 AM",
     accent: "violet",
-    location: "Call",
-    participants: ["Priya N."],
-    notes: "Career growth + current priorities.",
   },
   {
     id: "e6",
@@ -70,92 +51,7 @@ export const events: CalendarEvent[] = [
     start: "1:00 PM",
     end: "3:00 PM",
     accent: "plum",
-    location: "Boardroom",
-    participants: ["Leadership"],
   },
-  {
-    id: "e7",
-    title: "Investor call",
-    date: "2026-05-15",
-    start: "3:00 PM",
-    end: "4:00 PM",
-    accent: "gold",
-    location: "Call",
-    participants: ["Board"],
-  },
-  {
-    id: "e8",
-    title: "Team retro",
-    date: "2026-05-21",
-    start: "4:00 PM",
-    end: "5:00 PM",
-    accent: "burgundy",
-    location: "Conference Room A",
-    participants: ["Team"],
-  },
-]
-
-export const tasks: Task[] = [
-  { id: "t1", title: "Review Q3 strategy deck", bucket: "today", priority: "high", due: "2:00 PM", done: false },
-  { id: "t2", title: "Reply to Priya about roadmap", bucket: "today", priority: "medium", due: "4:00 PM", done: false },
-  { id: "t3", title: "Approve design system tokens", bucket: "today", priority: "medium", done: false },
-  { id: "t4", title: "Draft investor update", bucket: "upcoming", priority: "high", due: "Thu", done: false },
-  { id: "t5", title: "Book team offsite venue", bucket: "upcoming", priority: "low", due: "Fri", done: false },
-  { id: "t6", title: "Renew domain certificates", bucket: "upcoming", priority: "medium", due: "Next week", done: false },
-  { id: "t7", title: "Finalize hiring plan", bucket: "completed", priority: "high", done: true },
-  { id: "t8", title: "Ship onboarding revamp", bucket: "completed", priority: "medium", done: true },
-]
-
-export const notes: Note[] = [
-  {
-    id: "n1",
-    title: "Product principles",
-    preview: "Calm by default. Progressive disclosure. The assistant is a presence, not a panel...",
-    body: "Calm by default.\nProgressive disclosure.\nThe assistant is a presence, not a panel.\nEvery surface should feel like light through glass.",
-    updated: "2h ago",
-    tag: "Product",
-  },
-  {
-    id: "n2",
-    title: "Strategy sync notes",
-    preview: "Roadmap: focus on retention before growth. Three bets for the quarter...",
-    body: "Roadmap: focus on retention before growth.\nThree bets for the quarter:\n1. Memory\n2. Ambient presence\n3. Time awareness",
-    updated: "Yesterday",
-    tag: "Meetings",
-  },
-  {
-    id: "n3",
-    title: "Reading list",
-    preview: "The Design of Everyday Things, Thinking in Systems, Ambient Findability...",
-    body: "The Design of Everyday Things\nThinking in Systems\nAmbient Findability\nThe Timeless Way of Building",
-    updated: "3 days ago",
-    tag: "Personal",
-  },
-  {
-    id: "n4",
-    title: "Offsite ideas",
-    preview: "Somewhere with nature. Half work, half rest. Cooking session on night two...",
-    body: "Somewhere with nature.\nHalf work, half rest.\nCooking session on night two.",
-    updated: "Last week",
-    tag: "Team",
-  },
-]
-
-export const knowledge: KnowledgeItem[] = [
-  { id: "k1", title: "You prefer async updates over meetings", kind: "memory", detail: "Learned from 6 conversations", meta: "Preference" },
-  { id: "k2", title: "Design system spec v2", kind: "source", detail: "PDF · 24 pages", meta: "Document" },
-  { id: "k3", title: "Company handbook", kind: "source", detail: "Notion workspace", meta: "Linked" },
-  { id: "k4", title: "Your writing voice", kind: "memory", detail: "Concise, warm, direct", meta: "Style" },
-  { id: "k5", title: "Q2 board summary", kind: "saved", detail: "Generated by Mycroft", meta: "Summary" },
-  { id: "k6", title: "Competitor landscape", kind: "saved", detail: "Research thread", meta: "Research" },
-]
-
-export const devices: Device[] = [
-  { id: "d1", name: "Studio Speaker", kind: "speaker", status: "active", detail: "Listening · Living room" },
-  { id: "d2", name: "iPhone 16 Pro", kind: "phone", status: "active", detail: "Synced · 2m ago" },
-  { id: "d3", name: "MacBook Pro", kind: "laptop", status: "idle", detail: "This device" },
-  { id: "d4", name: "Watch Series 10", kind: "watch", status: "idle", detail: "Synced · 1h ago" },
-  { id: "d5", name: "Kitchen Display", kind: "display", status: "offline", detail: "Last seen yesterday" },
 ]
 
 export function toISODate(date: Date): string {
