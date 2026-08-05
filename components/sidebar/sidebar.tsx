@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useMycroft } from "@/components/providers/mycroft-provider"
 import type { NavId } from "@/types"
 
 const NAV_ITEMS: { id: NavId; label: string; icon: LucideIcon }[] = [
@@ -23,17 +24,28 @@ const NAV_ITEMS: { id: NavId; label: string; icon: LucideIcon }[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ]
 
-interface SidebarProps {
-  active: NavId
-  onNavigate: (id: NavId) => void
-}
+export function Sidebar() {
+  const { nav, setNav } = useMycroft()
 
-export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
-    <aside className="glass flex h-full w-[76px] shrink-0 flex-col rounded-[30px] p-3 lg:w-[236px]">
-      <nav aria-label="Primary" className="flex flex-1 flex-col gap-1.5 pt-2">
+    <aside className="glass flex h-full w-[74px] shrink-0 flex-col rounded-[30px] p-3 lg:w-[228px]">
+      <div className="hidden items-center gap-2.5 px-3 pb-2 pt-1.5 lg:flex">
+        <span
+          className="size-5 rounded-full ring-1 ring-white/40 animate-breathe"
+          style={{
+            background:
+              "conic-gradient(from 210deg, var(--violet), var(--plum), var(--burgundy), var(--gold), var(--violet))",
+          }}
+          aria-hidden
+        />
+        <span className="text-[11px] font-medium uppercase tracking-[0.34em] text-muted-foreground">
+          Mycroft
+        </span>
+      </div>
+
+      <nav aria-label="Primary" className="flex flex-1 flex-col gap-0.5 pt-2">
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
-          const isActive = active === id
+          const isActive = nav === id
           return (
             <button
               key={id}
@@ -41,26 +53,39 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
               title={label}
               aria-label={label}
               aria-current={isActive ? "page" : undefined}
-              onClick={() => onNavigate(id)}
+              onClick={() => setNav(id)}
               className={cn(
-                "state-layer group relative flex items-center justify-center gap-3.5 rounded-[18px] px-2 py-2.5 text-left transition-all duration-200 lg:justify-start lg:px-3",
+                "state-layer group relative flex items-center justify-center gap-3 rounded-[16px] px-2 py-2.5 text-left transition-all duration-200 lg:justify-start lg:px-2.5",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-                isActive
-                  ? "glass-soft text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
+                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
+              style={
+                isActive
+                  ? {
+                      background: "color-mix(in srgb, var(--violet) 12%, transparent)",
+                      boxShadow:
+                        "inset 0 1px 0 0 var(--glass-highlight), inset 0 0 0 1px color-mix(in srgb, var(--violet) 22%, transparent), 0 10px 22px -18px var(--glass-shadow)",
+                    }
+                  : undefined
+              }
             >
-              <span
+              {/* subtle accent illumination on the active item */}
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full"
+                  style={{ background: "var(--violet)" }}
+                />
+              )}
+              <Icon
                 className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-[12px] transition-colors",
-                  isActive
-                    ? "bg-[color-mix(in_srgb,var(--violet)_16%,transparent)] text-violet"
-                    : "bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] text-muted-foreground group-hover:text-foreground",
+                  "size-[19px] shrink-0 transition-colors",
+                  isActive ? "text-violet" : "text-current",
                 )}
-              >
-                <Icon className="size-[18px]" strokeWidth={1.75} aria-hidden />
-              </span>
-              <span className="hidden text-[15px] font-medium tracking-tight lg:inline">
+                strokeWidth={isActive ? 2 : 1.75}
+                aria-hidden
+              />
+              <span className="hidden text-[14px] font-medium tracking-tight lg:inline">
                 {label}
               </span>
             </button>
@@ -75,9 +100,9 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
 
 function ProfileChip() {
   return (
-    <div className="glass-soft mt-2 flex items-center justify-center gap-3 rounded-[20px] p-2.5 lg:justify-start">
+    <div className="mt-2 flex items-center justify-center gap-3 rounded-[18px] px-2 py-2 lg:justify-start lg:px-2.5">
       <span
-        className="size-10 shrink-0 rounded-full ring-1 ring-white/50 animate-breathe"
+        className="size-9 shrink-0 rounded-full ring-1 ring-white/50 animate-breathe"
         style={{
           background:
             "conic-gradient(from 210deg, var(--violet), var(--plum), var(--burgundy), var(--gold), var(--violet))",
@@ -85,8 +110,8 @@ function ProfileChip() {
         aria-hidden
       />
       <div className="hidden min-w-0 leading-tight lg:block">
-        <p className="truncate text-sm font-semibold text-foreground">Mycroft</p>
-        <p className="truncate text-xs text-muted-foreground">AI Assistant</p>
+        <p className="truncate text-[13px] font-semibold text-foreground">Mycroft</p>
+        <p className="truncate text-[11px] text-muted-foreground">AI Assistant</p>
       </div>
     </div>
   )
