@@ -192,14 +192,14 @@
     transform: translateZ(0);
   }
   .env-image--light {
-    background-image: url("/environment-light.png");
-    opacity: 0.5;
-    filter: blur(1px) brightness(1.06) saturate(1.02) contrast(0.96);
+    background-image: url("/environment/new-background.avif");
+    opacity: 0.72;
+    filter: brightness(1.08) saturate(1.06) contrast(0.98);
   }
   .env-image--dark {
-    background-image: url("/environment-dark.jpg");
+    background-image: url("/environment/new-background.avif");
     opacity: 0;
-    filter: blur(2px) brightness(0.72) saturate(1.08) contrast(1.02);
+    filter: brightness(0.6) saturate(1.12) contrast(1.04);
   }
   .dark .env-image--light {
     opacity: 0;
@@ -373,6 +373,33 @@
 }
 
 @layer utilities {
+  /* ============================================================
+     GLASS ROD — a single rendered-glass element of the waveform
+     sculpture. Clear, luminous, minimal: bright specular caps top and
+     bottom, a translucent body that refracts the ambient colour behind
+     it, a crisp rim, and a soft lift shadow. Height is driven per-frame
+     via transform: scaleY() (see GlassWaveform).
+     ============================================================ */
+  .glass-rod {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--glass-highlight) 95%, transparent),
+      color-mix(in srgb, var(--glass) 70%, transparent) 26%,
+      color-mix(in srgb, var(--glass) 62%, transparent) 74%,
+      color-mix(in srgb, var(--glass-highlight) 95%, transparent)
+    );
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    box-shadow:
+      inset 0 1px 0 0 color-mix(in srgb, var(--glass-highlight) 90%, transparent),
+      inset 0 0 8px 0 color-mix(in srgb, var(--glass-highlight) 30%, transparent),
+      0 3px 10px -4px var(--glass-shadow);
+    backdrop-filter: blur(5px) saturate(170%);
+    -webkit-backdrop-filter: blur(5px) saturate(170%);
+    transform-origin: center;
+    will-change: transform, opacity;
+  }
+
   .waveform-bar {
     animation: waveform 1s ease-in-out infinite;
   }
