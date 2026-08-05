@@ -106,22 +106,25 @@ export function LiquidOrb({ status, tint, detail = 48, animate = true }: LiquidO
     <mesh ref={meshRef} geometry={geo} scale={1.28}>
       <MeshTransmissionMaterial
         ref={matRef}
-        samples={6}
-        resolution={256}
+        samples={8}
+        resolution={384}
         transmission={1}
-        roughness={0.02}
+        roughness={0.05}
         thickness={0.9}
         ior={1.35}
-        chromaticAberration={0.18}
-        anisotropicBlur={0.1}
-        distortion={0.16}
-        distortionScale={0.3}
-        temporalDistortion={0.08}
+        chromaticAberration={0.22}
+        anisotropicBlur={0.4}
+        distortion={0.26}
+        distortionScale={0.5}
+        temporalDistortion={0.12}
         clearcoat={1}
-        clearcoatRoughness={0.03}
-        attenuationDistance={3}
+        clearcoatRoughness={0.05}
+        /* Keep the volume nearly clear — a long attenuation distance and a
+           very faint tint prevent the muddy opaque grey core. Colour comes
+           from the refracted light rig, not from absorption. */
+        attenuationDistance={12}
         attenuationColor={tint}
-        color={tint}
+        color="#ffffff"
         backside
         backsideThickness={0.4}
       />

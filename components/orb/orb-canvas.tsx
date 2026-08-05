@@ -16,34 +16,56 @@ import type { AssistantStatus } from "@/types"
 
 const THEME = {
   light: {
-    tint: "#f5f8fc",
+    tint: "#eaf1fb",
     bg: "#e6ebf2",
     ambient: 1.4,
-    fill: "#eaf0f8",
-    fillIntensity: 2.6,
+    fill: "#eef3fa",
+    fillIntensity: 3.4,
     formers: [
-      { color: "#ffffff", intensity: 6.0, position: [-4, 4, 3], scale: [10, 10, 1] },
-      { color: "#cddaf0", intensity: 4.5, position: [4, 2, 2], scale: [7, 7, 1] },
-      { color: "#eef2f8", intensity: 3.5, position: [0, -4, 3], scale: [9, 4, 1] },
-      { color: "#a9bfe4", intensity: 2.4, position: [3, -3, -2], scale: [6, 6, 1] },
-      { color: "#b7a6ee", intensity: 1.4, position: [-3, -1, -3], scale: [5, 5, 1] },
+      { color: "#ffffff", intensity: 6.5, position: [-4, 4, 3], scale: [9, 1.2, 1], rotation: 0.5 },
+      { color: "#cddaf0", intensity: 5.0, position: [4, 2, 2], scale: [8, 1.1, 1], rotation: -0.5 },
+      { color: "#eef2f8", intensity: 3.8, position: [0, -4, 3], scale: [9, 1.4, 1], rotation: 0.1 },
+      { color: "#a9bfe4", intensity: 2.8, position: [3, -3, -2], scale: [7, 1, 1], rotation: -0.9 },
+      { color: "#b7a6ee", intensity: 1.8, position: [-3, -1, -3], scale: [6, 0.9, 1], rotation: 1.0 },
     ],
   },
   dark: {
-    tint: "#3a3550",
+    tint: "#a99fd8",
     bg: "#0c0b12",
-    ambient: 0.25,
-    fill: "#181528",
-    fillIntensity: 0.9,
+    ambient: 0.5,
+    // Brighter translucent fill so the body glows instead of going black —
+    // the reference orb is a lit deep-violet volume, not a black ball.
+    fill: "#332c5a",
+    fillIntensity: 2.2,
+    // Thin, elongated, rotated streaks (not big circles) so refraction reads
+    // as flowing internal bands rather than flat discs.
     formers: [
-      { color: "#9683e0", intensity: 4.0, position: [-4, 3, 2], scale: [7, 7, 1] },
-      { color: "#c15068", intensity: 3.4, position: [4, -1, 2], scale: [6, 6, 1] },
-      { color: "#e8bc86", intensity: 2.6, position: [2, 3, 3], scale: [4, 4, 1] },
-      { color: "#4f9ad6", intensity: 2.4, position: [-3, -3, 1], scale: [5, 5, 1] },
-      { color: "#ffffff", intensity: 2.0, position: [0, 5, -2], scale: [6, 3, 1] },
+      { color: "#9d86ec", intensity: 4.6, position: [-3.5, 3, 2], scale: [7, 0.5, 1], rotation: 0.5 },
+      { color: "#c65872", intensity: 4.0, position: [3.5, -1.5, 2], scale: [7.5, 0.55, 1], rotation: -0.6 },
+      { color: "#f0c48e", intensity: 2.8, position: [2.5, 3, 2.5], scale: [6, 0.4, 1], rotation: 0.9 },
+      { color: "#57a6e2", intensity: 3.0, position: [-3, -3, 1.5], scale: [6.5, 0.45, 1], rotation: -0.4 },
+      { color: "#ffffff", intensity: 2.8, position: [0, 4.5, -1], scale: [6, 0.35, 1], rotation: 0.2 },
+      { color: "#7e6ad6", intensity: 2.4, position: [-1, -1, -3], scale: [6, 0.45, 1], rotation: 1.2 },
     ],
   },
 } as const
+
+/* Six inward-facing panels enclosing the orb — a soft light box that
+   guarantees the transmission material always has light to refract. Top and
+   front read brightest (key light), the rest are gentle fill. */
+function LightBox({ color, intensity }: { color: string; intensity: number }) {
+  const S: [number, number, number] = [16, 16, 1]
+  return (
+    <group>
+      <Lightformer form="rect" color={color} intensity={intensity} position={[0, 0, -8]} scale={S} target={[0, 0, 0]} />
+      <Lightformer form="rect" color={color} intensity={intensity * 0.9} position={[0, 0, 8]} scale={S} target={[0, 0, 0]} />
+      <Lightformer form="rect" color={color} intensity={intensity * 1.15} position={[0, 8, 0]} scale={S} target={[0, 0, 0]} />
+      <Lightformer form="rect" color={color} intensity={intensity * 0.6} position={[0, -8, 0]} scale={S} target={[0, 0, 0]} />
+      <Lightformer form="rect" color={color} intensity={intensity * 0.8} position={[-8, 0, 0]} scale={S} target={[0, 0, 0]} />
+      <Lightformer form="rect" color={color} intensity={intensity * 0.8} position={[8, 0, 0]} scale={S} target={[0, 0, 0]} />
+    </group>
+  )
+}
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false)
@@ -80,41 +102,26 @@ export function OrbCanvas({ status }: { status: AssistantStatus }) {
     <Canvas
       className="!absolute inset-0"
       frameloop={frameloop}
-      dpr={[1, 1.6]}
+      dpr={[1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       camera={{ position: [0, 0, 4.4], fov: 40 }}
     >
       <ambientLight intensity={cfg.ambient} />
 
-      {/* Custom lighting rig — refracted through the glass to make the swirl.
-          A large enveloping panel fills the whole environment so the glass
-          transmits light in every direction (no dead black core), while the
-          colored circles paint the iridescent highlights on top. */}
-      <Environment resolution={160} background={false}>
-        <Lightformer
-          form="rect"
-          color={cfg.fill}
-          intensity={cfg.fillIntensity}
-          position={[0, 0, -6]}
-          scale={[24, 24, 1]}
-          target={[0, 0, 0]}
-        />
-        <Lightformer
-          form="rect"
-          color={cfg.fill}
-          intensity={cfg.fillIntensity * 0.7}
-          position={[0, 0, 6]}
-          scale={[24, 24, 1]}
-          target={[0, 0, 0]}
-        />
+      {/* Fully enveloping light box: six fill panels surround the sphere so
+          the glass refracts real light in EVERY direction (no black voids),
+          then colored streaks paint the iridescent internal swirl on top. */}
+      <Environment resolution={256} background={false}>
+        <LightBox color={cfg.fill} intensity={cfg.fillIntensity} />
         {cfg.formers.map((f, i) => (
           <Lightformer
             key={i}
-            form="circle"
+            form="rect"
             color={f.color}
             intensity={f.intensity}
             position={f.position as [number, number, number]}
             scale={f.scale as [number, number, number]}
+            rotation={[0, 0, (f as { rotation?: number }).rotation ?? 0]}
             target={[0, 0, 0]}
           />
         ))}
