@@ -313,7 +313,15 @@ export function GlassWaveform() {
   const [reduced] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   )
-  const [webgl] = useState(hasWebGL)
+  // Only probe WebGL / mount the R3F canvas on the client, after the first
+  // paint. This keeps SSR and the initial client render identical (both show
+  // the static glass fallback), avoiding a hydration mismatch.
+  const [mounted, setMounted] = useState(false)
+  const [webgl, setWebgl] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+    setWebgl(hasWebGL())
+  }, [])
 
   const enableMic = useCallback(async () => {
     if (analyserRef.current) return
@@ -373,7 +381,7 @@ export function GlassWaveform() {
       />
 
       <div className="relative h-[clamp(200px,30vw,320px)] w-full">
-        {webgl ? (
+        {mounted && webgl ? (
           <Canvas
             dpr={[1, 1.75]}
             gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
