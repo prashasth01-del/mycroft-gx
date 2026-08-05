@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react"
 import { ChevronRight } from "lucide-react"
-import { events as allEvents, REFERENCE_DATE, toISODate } from "@/lib/mock-data"
+import { REFERENCE_DATE, toISODate, TODAY_ISO } from "@/lib/mock-data"
+import { useMycroft } from "@/components/providers/mycroft-provider"
 import type { AccentKey } from "@/types"
 import { MonthGrid } from "./month-grid"
-import { EventDialog } from "./event-dialog"
 
 const ACCENT_VAR: Record<AccentKey, string> = {
   violet: "var(--violet)",
@@ -14,55 +14,40 @@ const ACCENT_VAR: Record<AccentKey, string> = {
   gold: "var(--gold)",
 }
 
-function formatDateLabel(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString([], {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  })
-}
-
 export function CalendarPanel() {
+  const { events, setActiveNav, selectedDateISO, setSelectedDateISO } = useMycroft()
   const [viewMonth, setViewMonth] = useState(
     () => new Date(REFERENCE_DATE.getFullYear(), REFERENCE_DATE.getMonth(), 1),
   )
-  const [selectedISO, setSelectedISO] = useState<string>(toISODate(REFERENCE_DATE))
-  const [dialogISO, setDialogISO] = useState<string | null>(null)
 
-  const eventDates = useMemo(() => new Set(allEvents.map((e) => e.date)), [])
+  const eventDates = useMemo(() => new Set(events.map((e) => e.date)), [events])
 
   const upcoming = useMemo(
     () =>
-      [...allEvents]
-        .filter((e) => e.date >= toISODate(REFERENCE_DATE))
+      [...events]
+        .filter((e) => e.date >= TODAY_ISO)
         .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
         .slice(0, 4),
-    [],
-  )
-
-  const dialogEvents = useMemo(
-    () => (dialogISO ? allEvents.filter((e) => e.date === dialogISO) : []),
-    [dialogISO],
+    [events],
   )
 
   const changeMonth = (delta: number) =>
     setViewMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
 
-  const handleSelect = (iso: string) => {
-    setSelectedISO(iso)
-    setDialogISO(iso)
+  const openCalendar = (iso: string) => {
+    setSelectedDateISO(iso)
+    setActiveNav("calendar")
   }
 
   return (
     <aside className="glass flex w-full shrink-0 flex-col gap-5 rounded-[30px] p-6 lg:w-[360px]">
       <MonthGrid
         viewMonth={viewMonth}
-        selectedISO={selectedISO}
+        selectedISO={selectedDateISO}
         eventDates={eventDates}
         onPrev={() => changeMonth(-1)}
         onNext={() => changeMonth(1)}
-        onSelect={handleSelect}
+        onSelect={openCalendar}
       />
 
       <div className="h-px w-full bg-border" aria-hidden />
@@ -74,6 +59,7 @@ export function CalendarPanel() {
           </h3>
           <button
             type="button"
+            onClick={() => setActiveNav("calendar")}
             className="rounded-md text-xs font-medium text-violet transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             View all
@@ -85,7 +71,7 @@ export function CalendarPanel() {
             <li key={event.id}>
               <button
                 type="button"
-                onClick={() => handleSelect(event.date)}
+                onClick={() => openCalendar(event.date)}
                 className="state-layer group relative flex w-full items-center gap-3 rounded-[16px] px-2.5 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span
@@ -94,11 +80,9 @@ export function CalendarPanel() {
                   style={{ background: ACCENT_VAR[event.accent] }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {event.title}
-                  </p>
+                  <p className="truncate text-sm font-medium text-foreground">{event.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {event.start} – {event.end}
+                    {event.allDay ? "All day" : `${event.start} – ${event.end}`}
                   </p>
                 </div>
                 <ChevronRight
@@ -111,13 +95,6 @@ export function CalendarPanel() {
           ))}
         </ul>
       </div>
-
-      <EventDialog
-        open={dialogISO !== null}
-        dateLabel={dialogISO ? formatDateLabel(dialogISO) : ""}
-        events={dialogEvents}
-        onClose={() => setDialogISO(null)}
-      />
     </aside>
   )
 }

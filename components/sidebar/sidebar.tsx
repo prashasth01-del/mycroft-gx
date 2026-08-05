@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useMycroft } from "@/components/providers/mycroft-provider"
 import type { NavId } from "@/types"
 
 const NAV_ITEMS: { id: NavId; label: string; icon: LucideIcon }[] = [
@@ -23,17 +24,14 @@ const NAV_ITEMS: { id: NavId; label: string; icon: LucideIcon }[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ]
 
-interface SidebarProps {
-  active: NavId
-  onNavigate: (id: NavId) => void
-}
+export function Sidebar() {
+  const { activeNav, setActiveNav } = useMycroft()
 
-export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
     <aside className="glass flex h-full w-[76px] shrink-0 flex-col rounded-[30px] p-3 lg:w-[236px]">
-      <nav aria-label="Primary" className="flex flex-1 flex-col gap-1.5 pt-2">
+      <nav aria-label="Primary" className="flex flex-1 flex-col gap-1 pt-2">
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
-          const isActive = active === id
+          const isActive = activeNav === id
           return (
             <button
               key={id}
@@ -41,26 +39,37 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
               title={label}
               aria-label={label}
               aria-current={isActive ? "page" : undefined}
-              onClick={() => onNavigate(id)}
+              onClick={() => setActiveNav(id)}
               className={cn(
                 "state-layer group relative flex items-center justify-center gap-3.5 rounded-[18px] px-2 py-2.5 text-left transition-all duration-200 lg:justify-start lg:px-3",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-                isActive
-                  ? "glass-soft text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
+                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
+              {/* Soft active glow indicator instead of a hard box */}
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute inset-0 rounded-[18px] bg-[color-mix(in_srgb,var(--violet)_12%,transparent)] ring-1 ring-[color-mix(in_srgb,var(--violet)_22%,transparent)]"
+                />
+              )}
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 hidden h-6 w-1 -translate-y-1/2 rounded-full bg-violet lg:block"
+                />
+              )}
               <span
                 className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-[12px] transition-colors",
+                  "relative flex size-9 shrink-0 items-center justify-center rounded-[12px] transition-colors",
                   isActive
-                    ? "bg-[color-mix(in_srgb,var(--violet)_16%,transparent)] text-violet"
+                    ? "bg-[color-mix(in_srgb,var(--violet)_18%,transparent)] text-violet"
                     : "bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] text-muted-foreground group-hover:text-foreground",
                 )}
               >
                 <Icon className="size-[18px]" strokeWidth={1.75} aria-hidden />
               </span>
-              <span className="hidden text-[15px] font-medium tracking-tight lg:inline">
+              <span className="relative hidden text-[15px] font-medium tracking-tight lg:inline">
                 {label}
               </span>
             </button>

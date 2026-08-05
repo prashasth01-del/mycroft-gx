@@ -217,6 +217,16 @@
   .state-layer:active::before {
     opacity: 0.16;
   }
+
+  /* The single primary affordance — used sparingly */
+  .accent-fill {
+    background: linear-gradient(
+      135deg,
+      var(--violet),
+      color-mix(in srgb, var(--plum) 68%, var(--violet))
+    );
+    color: var(--primary-foreground);
+  }
 }
 
 @layer utilities {
@@ -247,16 +257,79 @@
     animation: breathe 6s ease-in-out infinite;
   }
   .fade-view {
-    animation: fadeView 200ms ease;
+    animation: fadeView 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   @keyframes fadeView {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(6px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Modal / command palette entrance */
+  .animate-scale-in {
+    animation: scaleIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .animate-overlay-in {
+    animation: overlayIn 200ms ease;
+  }
+  @keyframes overlayIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Brief theme crossfade applied on toggle */
+  .theme-transition,
+  .theme-transition * {
+    transition:
+      background-color 260ms ease,
+      color 260ms ease,
+      border-color 260ms ease,
+      box-shadow 260ms ease !important;
+  }
+
+  /* Quiet scrollbar for workspace panes */
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--foreground) 16%, transparent) transparent;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-quiet::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--foreground) 16%, transparent);
+    border-radius: 999px;
+  }
+  .scroll-quiet::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-breathe,
+  .waveform-bar,
+  .fade-view,
+  .animate-scale-in,
+  .animate-overlay-in {
+    animation: none !important;
   }
 }

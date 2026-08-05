@@ -24,7 +24,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme((prev) => {
       const next = prev === "dark" ? "light" : "dark"
       const root = document.documentElement
+      root.classList.add("theme-transition")
       root.classList.toggle("dark", next === "dark")
+      window.setTimeout(() => root.classList.remove("theme-transition"), 280)
       try {
         localStorage.setItem("mycroft-theme", next)
       } catch {
