@@ -15,37 +15,39 @@ import type { AssistantStatus } from "@/types"
 */
 
 const THEME = {
+  // Warm, luminous iridescence — a soft peachy-white glass body with flowing
+  // pink, lavender and gold bands (matching the Mycroft reference render).
   light: {
-    tint: "#eaf1fb",
-    bg: "#e6ebf2",
-    ambient: 1.4,
-    fill: "#eef3fa",
-    fillIntensity: 3.4,
+    tint: "#fbeef4",
+    bg: "#f2ebf0",
+    ambient: 1.1,
+    // Softer, warmer fill (not stark white) so the coloured bands read through.
+    fill: "#f3e2ea",
+    fillIntensity: 2.2,
+    // Broad, bright streaks so they melt into smooth glowing bands.
     formers: [
-      { color: "#ffffff", intensity: 6.5, position: [-4, 4, 3], scale: [9, 1.2, 1], rotation: 0.5 },
-      { color: "#cddaf0", intensity: 5.0, position: [4, 2, 2], scale: [8, 1.1, 1], rotation: -0.5 },
-      { color: "#eef2f8", intensity: 3.8, position: [0, -4, 3], scale: [9, 1.4, 1], rotation: 0.1 },
-      { color: "#a9bfe4", intensity: 2.8, position: [3, -3, -2], scale: [7, 1, 1], rotation: -0.9 },
-      { color: "#b7a6ee", intensity: 1.8, position: [-3, -1, -3], scale: [6, 0.9, 1], rotation: 1.0 },
+      { color: "#ffffff", intensity: 7.0, position: [-3.5, 4, 3], scale: [8, 1.4, 1], rotation: 0.5 },
+      { color: "#f79ac6", intensity: 8.0, position: [3.5, 1.5, 2], scale: [8, 1.5, 1], rotation: -0.5 },
+      { color: "#f4c877", intensity: 6.5, position: [2, -3.5, 3], scale: [8, 1.4, 1], rotation: 0.1 },
+      { color: "#b79cf2", intensity: 5.5, position: [-3, -2, -2], scale: [7, 1.3, 1], rotation: -0.9 },
+      { color: "#ffb3d4", intensity: 4.5, position: [-1, 1, -3], scale: [6, 1.2, 1], rotation: 1.0 },
     ],
   },
   dark: {
-    tint: "#b9b1e2",
-    bg: "#141222",
-    ambient: 0.85,
-    // Brighter, lighter translucent fill so the body reads as a lit glass
-    // volume — deep but never a dead black ball.
-    fill: "#4a4383",
-    fillIntensity: 3.0,
-    // Cool-only palette (violet → periwinkle → cyan → white) for a true
-    // liquid-glass look. No warm red/gold — those read as cheap plastic.
+    tint: "#e7c7d8",
+    bg: "#1a1220",
+    ambient: 0.95,
+    // Lit warm-plum body so it glows rather than going black.
+    fill: "#5a3a52",
+    fillIntensity: 3.2,
+    // Warm pink → magenta → gold → lavender bands over a deep plum surround.
     formers: [
-      { color: "#a99cf2", intensity: 4.8, position: [-3.5, 3, 2], scale: [7, 0.5, 1], rotation: 0.5 },
-      { color: "#8ea6f0", intensity: 4.2, position: [3.5, -1.5, 2], scale: [7.5, 0.5, 1], rotation: -0.6 },
-      { color: "#79d3e6", intensity: 3.4, position: [2.5, 3, 2.5], scale: [6, 0.4, 1], rotation: 0.9 },
-      { color: "#5f9fe4", intensity: 3.2, position: [-3, -3, 1.5], scale: [6.5, 0.45, 1], rotation: -0.4 },
-      { color: "#ffffff", intensity: 3.4, position: [0, 4.5, -1], scale: [6, 0.35, 1], rotation: 0.2 },
-      { color: "#9d8ff0", intensity: 2.8, position: [-1, -1, -3], scale: [6, 0.45, 1], rotation: 1.2 },
+      { color: "#ffd8ea", intensity: 5.0, position: [-3.5, 3.5, 2.5], scale: [8, 1.6, 1], rotation: 0.5 },
+      { color: "#f58ac0", intensity: 4.6, position: [3.5, 1, 2], scale: [8, 1.5, 1], rotation: -0.55 },
+      { color: "#f4c98a", intensity: 3.8, position: [2.5, -3, 2.5], scale: [7.5, 1.4, 1], rotation: 0.9 },
+      { color: "#c79bf0", intensity: 3.6, position: [-3, -2.5, 1.5], scale: [7.5, 1.4, 1], rotation: -0.4 },
+      { color: "#ffffff", intensity: 3.6, position: [0, 4.5, -1], scale: [6.5, 1.1, 1], rotation: 0.2 },
+      { color: "#e08fc4", intensity: 2.8, position: [-1, -1, -3], scale: [7, 1.3, 1], rotation: 1.2 },
     ],
   },
 } as const

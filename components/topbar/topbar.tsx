@@ -1,6 +1,6 @@
 "use client"
 
-import { Mic, MicOff, Moon, Search, Sun } from "lucide-react"
+import { Mic, MicOff, Moon, Sun } from "lucide-react"
 import { useClock, useSessionTimer } from "@/hooks/use-clock"
 import { useTheme } from "@/components/theme-provider"
 import { useMycroft } from "@/components/providers/mycroft-provider"
