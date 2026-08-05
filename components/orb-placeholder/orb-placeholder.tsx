@@ -54,7 +54,7 @@ export function OrbPlaceholder({ status }: OrbPlaceholderProps) {
           {/* placeholder sphere */}
           <div
             className={cn(
-              "size-full rounded-full ring-1 ring-white/40 animate-breathe",
+              "inline-flex size-full rounded-[180px] ring-1 ring-white/40 animate-breathe",
               "shadow-[inset_0_2px_20px_rgba(255,255,255,0.6),0_30px_80px_-30px_rgba(56,53,52,0.5)]",
             )}
             style={{
