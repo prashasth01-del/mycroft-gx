@@ -46,7 +46,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-suisse), ui-sans-serif, system-ui, sans-serif;
   /* Mycroft ambient accents */
   --color-violet: var(--violet);
   --color-plum: var(--plum);
@@ -114,12 +114,12 @@
   --burgundy: #c15068;
   --gold: #e8bc86;
 
-  --glass: rgba(255, 255, 255, 0.055);
-  --glass-2: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-highlight: rgba(255, 255, 255, 0.14);
-  --glass-lowlight: rgba(0, 0, 0, 0.22);
-  --glass-shadow: rgba(0, 0, 0, 0.5);
+  --glass: rgba(255, 255, 255, 0.07);
+  --glass-2: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.22);
+  --glass-lowlight: rgba(0, 0, 0, 0.3);
+  --glass-shadow: rgba(0, 0, 0, 0.55);
   --state-layer: 150 131 224;
 
   --background: #1a1817;
@@ -160,46 +160,189 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(1200px 800px at 18% -10%, rgba(123, 99, 200, 0.16), transparent 60%),
-      radial-gradient(1000px 700px at 100% 0%, rgba(138, 90, 120, 0.14), transparent 55%),
-      radial-gradient(1100px 900px at 90% 110%, rgba(224, 168, 104, 0.12), transparent 55%),
-      radial-gradient(900px 900px at 30% 120%, rgba(154, 42, 66, 0.08), transparent 55%),
-      radial-gradient(circle at 50% 50%, #efedea 0%, #ece8e4 100%);
-    background-attachment: fixed;
+    @apply text-foreground;
+    /* The environment image (EnvironmentBackground, fixed at z-index:-10) is the
+       real backdrop. Body stays transparent so it shows through; html keeps the
+       base color as a fallback. */
+    background-color: transparent;
     min-height: 100vh;
-  }
-  .dark body {
-    background-image:
-      radial-gradient(1200px 800px at 18% -10%, rgba(123, 99, 200, 0.22), transparent 60%),
-      radial-gradient(1000px 700px at 100% 0%, rgba(138, 90, 120, 0.18), transparent 55%),
-      radial-gradient(1100px 900px at 90% 110%, rgba(224, 168, 104, 0.12), transparent 55%),
-      radial-gradient(circle at 50% 50%, #1f1c1b 0%, #171514 100%);
   }
 }
 
 @layer components {
-  /* Liquid glass surface — physical layered material */
+  /* ============================================================
+     ENVIRONMENT — the physical space the glass lives inside.
+     A real photographic backdrop, atmospherically graded per theme.
+     ============================================================ */
+  .env-root {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--background);
+  }
+  .env-image {
+    position: absolute;
+    inset: -5%;
+    background-size: cover;
+    background-position: 50% 42%;
+    transition: opacity 500ms ease;
+    will-change: opacity;
+    transform: translateZ(0);
+  }
+  .env-image--light {
+    background-image: url("/environment/new-background.avif");
+    opacity: 0.72;
+    filter: brightness(1.08) saturate(1.06) contrast(0.98);
+  }
+  .env-image--dark {
+    background-image: url("/environment/new-background.avif");
+    opacity: 0;
+    filter: brightness(0.6) saturate(1.12) contrast(1.04);
+  }
+  .dark .env-image--light {
+    opacity: 0;
+  }
+  .dark .env-image--dark {
+    opacity: 0.62;
+  }
+  /* Color grade + ambient tints so the glass has environmental color to refract.
+     Light stays much quieter than dark. */
+  .env-grade {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(1100px 760px at 16% -8%, rgba(123, 99, 200, 0.1), transparent 60%),
+      radial-gradient(1000px 720px at 102% 4%, rgba(138, 90, 120, 0.09), transparent 55%),
+      radial-gradient(1100px 900px at 88% 112%, rgba(224, 168, 104, 0.08), transparent 55%),
+      linear-gradient(180deg, rgba(239, 237, 234, 0.42), rgba(236, 232, 228, 0.5));
+  }
+  .dark .env-grade {
+    background:
+      radial-gradient(1200px 820px at 16% -8%, rgba(123, 99, 200, 0.2), transparent 60%),
+      radial-gradient(1000px 720px at 102% 2%, rgba(138, 90, 120, 0.16), transparent 55%),
+      radial-gradient(1100px 900px at 88% 112%, rgba(224, 168, 104, 0.1), transparent 55%),
+      radial-gradient(900px 720px at 50% 46%, rgba(12, 11, 10, 0.34), transparent 62%),
+      linear-gradient(180deg, rgba(20, 18, 17, 0.32), rgba(16, 14, 13, 0.46));
+  }
+  /* Vignette — softly darkens edges so image edges never read as a hard crop. */
+  .env-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 120% at 50% 40%, transparent 52%, rgba(214, 209, 202, 0.5) 100%);
+  }
+  .dark .env-vignette {
+    background: radial-gradient(120% 120% at 50% 40%, transparent 46%, rgba(6, 5, 5, 0.6) 100%);
+  }
+}
+
+@layer components {
+  /* ============================================================
+     LIQUID GLASS — a single coherent material, layered like real glass.
+
+     Light model is LOCKED and shared by every surface:
+       · key light from top-left  → bright specular top edge
+       · fill glow pooled top-center → soft internal luminance
+       · thickness at the bottom   → faint dark inset + short contact shadow
+       · lift shadow               → broad, soft, offset down
+
+     Tiers differ only in blur depth, tint strength and shadow spread —
+     never in light direction — so the whole UI feels cut from one sheet.
+     ============================================================ */
   .glass {
-    background: var(--glass);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--glass-highlight) 60%, transparent),
+        transparent 26%
+      ),
+      radial-gradient(
+        140% 90% at 30% 0%,
+        color-mix(in srgb, var(--glass) 100%, white 8%),
+        var(--glass) 60%
+      );
+    backdrop-filter: blur(30px) saturate(185%);
+    -webkit-backdrop-filter: blur(30px) saturate(185%);
     border: 1px solid var(--glass-border);
     box-shadow:
+      /* bright top specular edge (key light) */
       inset 0 1px 0 0 var(--glass-highlight),
-      inset 0 -1px 0 0 var(--glass-lowlight),
-      0 18px 40px -22px var(--glass-shadow);
+      /* thin lateral sheen */
+      inset 1px 0 0 0 color-mix(in srgb, var(--glass-highlight) 40%, transparent),
+      /* base thickness */
+      inset 0 -1px 1px 0 var(--glass-lowlight),
+      /* short contact shadow */
+      0 2px 6px -3px var(--glass-shadow),
+      /* broad lift shadow */
+      0 28px 60px -28px var(--glass-shadow);
   }
+  /* Fill glow — a soft pool of light near the top, painted behind content. */
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(
+      120% 80% at 50% -8%,
+      color-mix(in srgb, var(--glass-highlight) 50%, transparent),
+      transparent 62%
+    );
+    pointer-events: none;
+  }
+
   .glass-soft {
-    background: var(--glass-2);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--glass-highlight) 34%, var(--glass-2)),
+      var(--glass-2) 40%
+    );
+    backdrop-filter: blur(18px) saturate(165%);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
     border: 1px solid var(--glass-border);
     box-shadow:
       inset 0 1px 0 0 var(--glass-highlight),
-      0 8px 20px -16px var(--glass-shadow);
+      inset 0 -1px 1px 0 var(--glass-lowlight),
+      0 12px 26px -20px var(--glass-shadow);
   }
+
+  /* Tier: hero — the largest surfaces (orb stage, calendar workspace).
+     Deepest blur, most lift, faintest tint so content floats clearly. */
+  .glass-hero {
+    backdrop-filter: blur(40px) saturate(190%);
+    -webkit-backdrop-filter: blur(40px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-highlight),
+      inset 1px 0 0 0 color-mix(in srgb, var(--glass-highlight) 40%, transparent),
+      inset 0 -1px 1px 0 var(--glass-lowlight),
+      0 2px 8px -3px var(--glass-shadow),
+      0 40px 90px -36px var(--glass-shadow);
+  }
+
+  /* Tier: dense — panels holding lists/grids (calendar summary, workspaces).
+     Slightly higher opacity floor so small text stays legible over busy areas. */
+  .glass-dense {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--glass-highlight) 55%, transparent),
+        transparent 22%
+      ),
+      color-mix(in srgb, var(--glass) 100%, var(--background) 16%);
+  }
+
+  /* Content plate — sits INSIDE glass to guarantee text contrast without
+     making the whole panel opaque. Used behind dense text clusters. */
+  .content-plate {
+    background: color-mix(in srgb, var(--background) 40%, transparent);
+    border-radius: calc(var(--radius) - 12px);
+  }
+
   /* state layers for hover/press using the violet accent */
   .state-layer::before {
     content: "";
@@ -216,6 +359,16 @@
   }
   .state-layer:active::before {
     opacity: 0.16;
+  }
+
+  /* The single primary affordance — used sparingly */
+  .accent-fill {
+    background: linear-gradient(
+      135deg,
+      var(--violet),
+      color-mix(in srgb, var(--plum) 68%, var(--violet))
+    );
+    color: var(--primary-foreground);
   }
 }
 
@@ -247,16 +400,79 @@
     animation: breathe 6s ease-in-out infinite;
   }
   .fade-view {
-    animation: fadeView 200ms ease;
+    animation: fadeView 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   @keyframes fadeView {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(6px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Modal / command palette entrance */
+  .animate-scale-in {
+    animation: scaleIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .animate-overlay-in {
+    animation: overlayIn 200ms ease;
+  }
+  @keyframes overlayIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Brief theme crossfade applied on toggle */
+  .theme-transition,
+  .theme-transition * {
+    transition:
+      background-color 260ms ease,
+      color 260ms ease,
+      border-color 260ms ease,
+      box-shadow 260ms ease !important;
+  }
+
+  /* Quiet scrollbar for workspace panes */
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--foreground) 16%, transparent) transparent;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-quiet::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--foreground) 16%, transparent);
+    border-radius: 999px;
+  }
+  .scroll-quiet::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-breathe,
+  .waveform-bar,
+  .fade-view,
+  .animate-scale-in,
+  .animate-overlay-in {
+    animation: none !important;
   }
 }

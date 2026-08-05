@@ -6,70 +6,103 @@ import {
   CircleCheck,
   Globe,
   Lightbulb,
-  Loader,
+  Mic,
+  MicOff,
   PencilLine,
   Search,
+  Sparkles,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useMycroft } from "@/components/providers/mycroft-provider"
+import type { CommandSurface } from "@/types"
 
-interface Action {
-  id: string
-  label: string
-  icon: LucideIcon
-  disabled?: boolean
-}
-
-const ACTIONS: Action[] = [
-  { id: "search", label: "Search", icon: Search },
-  { id: "note", label: "Create Note", icon: PencilLine },
-  { id: "task", label: "Add Task", icon: CircleCheck },
+// Compact quick-action icons shown to the right of the input, mirroring the
+// reference layout. Each opens its command surface.
+const QUICK_ACTIONS: { id: CommandSurface; label: string; icon: LucideIcon }[] = [
   { id: "brainstorm", label: "Brainstorm", icon: Lightbulb },
+  { id: "note", label: "Create note", icon: PencilLine },
+  { id: "task", label: "Add task", icon: CircleCheck },
   { id: "summarize", label: "Summarize", icon: ChartColumn },
   { id: "research", label: "Research", icon: Globe },
 ]
 
 export function ActionBar() {
-  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const { openCommand, muted, toggleMute } = useMycroft()
+  const [value, setValue] = useState("")
 
-  const handleClick = (id: string) => {
-    if (loadingId) return
-    setLoadingId(id)
-    // Simulate a request; replace with a real handler later.
-    setTimeout(() => setLoadingId((cur) => (cur === id ? null : cur)), 1200)
+  function submit() {
+    // Any typed prompt routes into the search/command surface.
+    openCommand("search")
+    setValue("")
   }
 
   return (
-    <div className="glass rounded-[26px] px-3 py-3">
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {ACTIONS.map(({ id, label, icon: Icon, disabled }) => {
-          const isLoading = loadingId === id
-          return (
+    <div className="glass rounded-[26px] p-2.5">
+      <div className="flex items-center gap-2">
+        {/* Sparkle affordance — opens the command palette */}
+        <button
+          type="button"
+          onClick={() => openCommand("search")}
+          aria-label="Open command palette"
+          className="state-layer relative flex size-11 shrink-0 items-center justify-center rounded-[16px] text-violet transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Sparkles className="size-[18px]" strokeWidth={1.75} aria-hidden />
+        </button>
+
+        {/* The ask-anything input */}
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+              e.preventDefault()
+              submit()
+            }
+          }}
+          placeholder="Ask Mycroft anything..."
+          aria-label="Ask Mycroft anything"
+          className="min-w-0 flex-1 bg-transparent px-1 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none"
+        />
+
+        {/* Quick-action icons */}
+        <div className="hidden items-center gap-1 md:flex">
+          {QUICK_ACTIONS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
-              disabled={disabled}
-              aria-busy={isLoading}
-              onClick={() => handleClick(id)}
-              className={cn(
-                "state-layer group relative flex items-center gap-2.5 rounded-[16px] px-4 py-2.5 text-sm font-medium text-foreground transition-all duration-200",
-                "hover:-translate-y-px hover:shadow-[0_10px_22px_-14px_var(--glass-shadow)]",
-                "active:scale-[0.97]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                "disabled:pointer-events-none disabled:opacity-40",
-              )}
+              onClick={() => openCommand(id)}
+              aria-label={label}
+              title={label}
+              className="state-layer group relative flex size-10 items-center justify-center rounded-[14px] text-muted-foreground transition-colors hover:text-violet focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span className="flex size-7 items-center justify-center rounded-[10px] bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] text-muted-foreground transition-colors group-hover:text-violet">
-                {isLoading ? (
-                  <Loader className="size-4 animate-spin" strokeWidth={2} aria-hidden />
-                ) : (
-                  <Icon className="size-4" strokeWidth={1.75} aria-hidden />
-                )}
-              </span>
-              <span className="tracking-tight">{label}</span>
+              <Icon className="size-[18px]" strokeWidth={1.75} aria-hidden />
             </button>
-          )
-        })}
+          ))}
+        </div>
+
+        <span className="mx-0.5 hidden h-6 w-px bg-border md:block" aria-hidden />
+
+        {/* Mic — mirrors the top bar mute state */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-pressed={!muted}
+          aria-label={muted ? "Unmute microphone" : "Mute microphone"}
+          className={cn(
+            "relative flex size-11 shrink-0 items-center justify-center rounded-[16px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            muted
+              ? "glass-soft text-muted-foreground"
+              : "accent-fill text-primary-foreground shadow-[0_10px_24px_-12px_var(--violet)]",
+          )}
+        >
+          {muted ? (
+            <MicOff className="size-[18px]" strokeWidth={1.75} aria-hidden />
+          ) : (
+            <Mic className="size-[18px]" strokeWidth={1.75} aria-hidden />
+          )}
+        </button>
       </div>
     </div>
   )

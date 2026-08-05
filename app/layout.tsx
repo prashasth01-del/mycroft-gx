@@ -1,12 +1,14 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Hanken_Grotesk } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
-const inter = Inter({
+// Suisse Int'l is proprietary; Hanken Grotesk is the closest legally available
+// Swiss grotesque — neutral, refined, highly legible.
+const suisse = Hanken_Grotesk({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-suisse',
   display: 'swap',
 })
 
@@ -47,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} bg-background`} suppressHydrationWarning>
+    <html lang="en" className={`${suisse.variable} bg-background`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

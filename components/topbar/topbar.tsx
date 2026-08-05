@@ -3,49 +3,58 @@
 import { Mic, MicOff, Moon, Sun } from "lucide-react"
 import { useClock, useSessionTimer } from "@/hooks/use-clock"
 import { useTheme } from "@/components/theme-provider"
+import { useMycroft } from "@/components/providers/mycroft-provider"
 import { cn } from "@/lib/utils"
 
-interface TopBarProps {
-  muted: boolean
-  onToggleMute: () => void
+const STATUS_TEXT = {
+  standby: "Muted",
+  listening: "Listening",
+  thinking: "Thinking",
+  speaking: "Speaking",
+} as const
+
+const USER_NAME = "Prashasth"
+
+function useGreeting(now: Date | null) {
+  const hour = now?.getHours() ?? 9
+  if (hour < 12) return { greeting: "Good morning", daypart: "day", isDay: true }
+  if (hour < 17) return { greeting: "Good afternoon", daypart: "afternoon", isDay: true }
+  if (hour < 21) return { greeting: "Good evening", daypart: "evening", isDay: false }
+  return { greeting: "Good evening", daypart: "night", isDay: false }
 }
 
-export function TopBar({ muted, onToggleMute }: TopBarProps) {
-  const { time } = useClock()
+export function TopBar() {
+  const { time, now } = useClock()
   const { formatted } = useSessionTimer()
   const { theme, toggleTheme } = useTheme()
+  const { muted, toggleMute, status } = useMycroft()
+  const { greeting, daypart, isDay } = useGreeting(now)
 
   return (
-    <header className="glass flex items-center justify-between rounded-[26px] px-6 py-3.5">
-      <div className="flex items-center gap-3">
-        <span
-          className="size-6 rounded-full ring-1 ring-white/40 animate-breathe"
-          style={{
-            background:
-              "conic-gradient(from 210deg, var(--violet), var(--plum), var(--burgundy), var(--gold), var(--violet))",
-          }}
-          aria-hidden
-        />
-        <h1 className="text-[15px] font-medium tracking-[0.42em] text-foreground">
-          MYCROFT
-        </h1>
+    <header className="glass flex items-center justify-between gap-4 rounded-[26px] px-5 py-3.5 sm:px-6">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <h1 className="truncate text-[19px] font-bold tracking-tight text-foreground sm:text-[21px]">
+            {greeting}, {USER_NAME}
+          </h1>
+          {isDay ? (
+            <Sun className="size-[18px] shrink-0 text-gold" strokeWidth={2} aria-hidden />
+          ) : (
+            <Moon className="size-[18px] shrink-0 text-violet" strokeWidth={2} aria-hidden />
+          )}
+        </div>
+        <p className="truncate text-[13px] text-muted-foreground">
+          How can I help you orchestrate your {daypart}?
+        </p>
       </div>
 
       <div className="flex items-center gap-2.5">
         <div className="glass-soft hidden items-center gap-3 rounded-[16px] px-4 py-2 sm:flex">
-          <div className="flex flex-col items-end leading-none">
-            <span className="font-mono text-sm font-medium tabular-nums text-foreground">
-              {time}
-            </span>
-          </div>
+          <span className="font-mono text-sm font-medium tabular-nums text-foreground">{time}</span>
           <span className="h-6 w-px bg-border" aria-hidden />
           <div className="flex flex-col leading-none">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Session
-            </span>
-            <span className="font-mono text-sm tabular-nums text-muted-foreground">
-              {formatted}
-            </span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Session</span>
+            <span className="font-mono text-sm tabular-nums text-muted-foreground">{formatted}</span>
           </div>
         </div>
 
@@ -64,29 +73,25 @@ export function TopBar({ muted, onToggleMute }: TopBarProps) {
 
         <button
           type="button"
-          onClick={onToggleMute}
+          onClick={toggleMute}
           aria-pressed={muted}
           className={cn(
             "state-layer relative flex items-center gap-2.5 rounded-[16px] px-4 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            muted
-              ? "glass-soft text-foreground"
-              : "text-primary-foreground shadow-[0_10px_24px_-12px_var(--violet)]",
+            muted ? "glass-soft text-foreground" : "accent-fill shadow-[0_10px_24px_-12px_var(--violet)]",
           )}
-          style={
-            muted
-              ? undefined
-              : {
-                  background:
-                    "linear-gradient(135deg, var(--violet), color-mix(in srgb, var(--plum) 70%, var(--violet)))",
-                }
-          }
         >
           {muted ? (
             <MicOff className="size-[18px]" strokeWidth={1.75} aria-hidden />
           ) : (
             <Mic className="size-[18px]" strokeWidth={1.75} aria-hidden />
           )}
-          <span className="tracking-wide">{muted ? "MUTED" : "LIVE"}</span>
+          {!muted && (
+            <span
+              aria-hidden
+              className="size-1.5 animate-pulse rounded-full bg-primary-foreground"
+            />
+          )}
+          <span className="tracking-wide">{STATUS_TEXT[status].toUpperCase()}</span>
         </button>
       </div>
     </header>
