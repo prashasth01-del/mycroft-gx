@@ -180,72 +180,31 @@
 }
 
 @layer components {
-  /*
-    Liquid glass — a layered physical material, not flat glassmorphism.
-    L1 translucent body (background)
-    L2 background refraction (backdrop blur + saturation)
-    L3 top specular edge (inset top highlight)
-    L4 lower thickness (inset bottom lowlight)
-    L5 ambient environment reflection (faint violet tint, top-left)
-    L6 cursor-reactive specular (::after, follows --mx/--my)
-  */
+  /* Liquid glass surface — physical layered material */
   .glass {
-    position: relative;
-    isolation: isolate;
-    background:
-      radial-gradient(
-        120% 140% at 12% 0%,
-        color-mix(in srgb, var(--violet) 8%, transparent) 0%,
-        transparent 42%
-      ),
-      var(--glass);
+    background: var(--glass);
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     border: 1px solid var(--glass-border);
     box-shadow:
       inset 0 1px 0 0 var(--glass-highlight),
-      inset 0 -1px 1px 0 var(--glass-lowlight),
-      0 24px 60px -30px var(--glass-shadow),
-      0 4px 14px -10px var(--glass-shadow);
+      inset 0 -1px 0 0 var(--glass-lowlight),
+      0 18px 40px -22px var(--glass-shadow);
   }
   .glass-soft {
-    position: relative;
-    isolation: isolate;
     background: var(--glass-2);
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid var(--glass-border);
     box-shadow:
       inset 0 1px 0 0 var(--glass-highlight),
-      0 10px 24px -20px var(--glass-shadow);
+      0 8px 20px -16px var(--glass-shadow);
   }
-
-  /* L6 — cursor-reactive specular. Extremely subtle; felt, not seen. */
-  .glass::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-    pointer-events: none;
-    background: radial-gradient(
-      220px circle at var(--mx, 50%) var(--my, 0%),
-      var(--glass-highlight),
-      transparent 60%
-    );
-    opacity: 0;
-    transition: opacity 400ms ease;
-  }
-  .glass:hover::after {
-    opacity: 0.6;
-  }
-
   /* state layers for hover/press using the violet accent */
   .state-layer::before {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: -1;
     border-radius: inherit;
     background: rgb(var(--state-layer));
     opacity: 0;
@@ -257,16 +216,6 @@
   }
   .state-layer:active::before {
     opacity: 0.16;
-  }
-
-  /* Accent gradient fill used sparingly for the single primary affordance */
-  .accent-fill {
-    background: linear-gradient(
-      135deg,
-      var(--violet),
-      color-mix(in srgb, var(--plum) 68%, var(--violet))
-    );
-    color: var(--primary-foreground);
   }
 }
 
@@ -297,96 +246,17 @@
   .animate-breathe {
     animation: breathe 6s ease-in-out infinite;
   }
-
-  /* Page / view transition — subtle crossfade + directional lift */
   .fade-view {
-    animation: fadeView 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: fadeView 200ms ease;
   }
   @keyframes fadeView {
     from {
       opacity: 0;
-      transform: translateY(6px);
+      transform: translateY(4px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  /* Modal / sheet entrance */
-  .animate-scale-in {
-    animation: scaleIn 240ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  @keyframes scaleIn {
-    from {
-      opacity: 0;
-      transform: translateY(8px) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  .animate-overlay-in {
-    animation: overlayIn 240ms ease;
-  }
-  @keyframes overlayIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  /* Theme crossfade — applied briefly on toggle */
-  .theme-transition,
-  .theme-transition * {
-    transition:
-      background-color 260ms ease,
-      color 260ms ease,
-      border-color 260ms ease,
-      box-shadow 260ms ease !important;
-  }
-
-  /* Thin scrollbar for workspace panes */
-  .scroll-quiet {
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent;
-  }
-  .scroll-quiet::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  .scroll-quiet::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--foreground) 16%, transparent);
-    border-radius: 999px;
-  }
-}
-
-/* Ambient environment — the room breathes with the orb's activity.
-   --ambient (0..1) is set on <html> by the assistant state. */
-:root {
-  --ambient: 0.35;
-}
-.ambient-stage {
-  position: relative;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-breathe,
-  .waveform-bar,
-  .fade-view,
-  .animate-scale-in,
-  .animate-overlay-in {
-    animation: none !important;
-  }
-  .glass::after {
-    display: none;
-  }
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
   }
 }
