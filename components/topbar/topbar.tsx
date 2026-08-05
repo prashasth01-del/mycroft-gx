@@ -22,15 +22,7 @@ export function TopBar() {
   return (
     <header className="glass flex items-center justify-between gap-4 rounded-[26px] px-5 py-3.5 sm:px-6">
       <div className="flex items-center gap-3">
-        <span
-          className="size-6 rounded-full ring-1 ring-white/40 animate-breathe"
-          style={{
-            background:
-              "conic-gradient(from 210deg, var(--violet), var(--plum), var(--burgundy), var(--gold), var(--violet))",
-          }}
-          aria-hidden
-        />
-        <h1 className="text-[15px] font-medium tracking-[0.42em] text-foreground">MYCROFT</h1>
+        <h1 className="text-[22px] font-bold tracking-[0.32em] text-foreground">MYCROFT</h1>
       </div>
 
       <div className="flex items-center gap-2.5">

@@ -53,14 +53,14 @@ export function HomeView() {
         }}
       />
 
-      <div className="relative flex flex-1 flex-col items-center justify-center gap-6">
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-5">
         {/* 3D orb stage */}
-        <div className="relative aspect-square w-[clamp(240px,34vw,420px)]">
+        <div className="relative aspect-square w-[clamp(200px,28vw,360px)] shrink">
           <OrbCanvas status={status} />
         </div>
 
         {/* Waveform / listening indicator */}
-        <div className="flex h-8 items-center justify-center gap-[3px]" aria-hidden>
+        <div className="flex h-8 shrink-0 items-center justify-center gap-[3px]" aria-hidden>
           {isActive
             ? Array.from({ length: 42 }).map((_, i) => {
                 const mid = Math.abs(i - 21)
@@ -83,7 +83,7 @@ export function HomeView() {
         </div>
 
         <p
-          className="text-lg font-normal tracking-tight text-foreground transition-opacity duration-300"
+          className="shrink-0 pb-1 text-lg font-normal tracking-tight text-foreground transition-opacity duration-300"
           aria-live="polite"
         >
           {STATUS_LABEL[status]}

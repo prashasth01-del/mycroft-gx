@@ -23,14 +23,14 @@ function Toggle({
       aria-label={label}
       onClick={onToggle}
       className={cn(
-        "relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        on ? "accent-fill" : "bg-[color-mix(in_srgb,var(--foreground)_14%,transparent)]",
+        "inline-flex h-7 w-[52px] shrink-0 items-center rounded-full p-[3px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        on ? "accent-fill" : "bg-[color-mix(in_srgb,var(--foreground)_16%,transparent)]",
       )}
     >
       <span
         className={cn(
-          "absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform",
-          on ? "translate-x-[22px]" : "translate-x-0.5",
+          "size-[22px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-transform duration-200",
+          on ? "translate-x-[24px]" : "translate-x-0",
         )}
       />
     </button>

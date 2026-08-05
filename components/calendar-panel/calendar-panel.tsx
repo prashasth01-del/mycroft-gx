@@ -27,7 +27,7 @@ export function CalendarPanel() {
       [...events]
         .filter((e) => e.date >= TODAY_ISO)
         .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
-        .slice(0, 4),
+        .slice(0, 3),
     [events],
   )
 
@@ -40,7 +40,7 @@ export function CalendarPanel() {
   }
 
   return (
-    <aside className="glass glass-dense flex w-full shrink-0 flex-col gap-5 rounded-[30px] p-6 lg:w-[360px]">
+    <aside className="glass glass-dense flex min-h-0 w-full flex-1 flex-col gap-5 rounded-[30px] p-6">
       <MonthGrid
         viewMonth={viewMonth}
         selectedISO={selectedDateISO}
@@ -66,7 +66,7 @@ export function CalendarPanel() {
           </button>
         </div>
 
-        <ul className="flex flex-col gap-1">
+        <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
           {upcoming.map((event) => (
             <li key={event.id}>
               <button

@@ -84,19 +84,13 @@ export function Sidebar() {
 
 function ProfileChip() {
   return (
-    <div className="glass-soft mt-2 flex items-center justify-center gap-3 rounded-[20px] p-2.5 lg:justify-start">
-      <span
-        className="size-10 shrink-0 rounded-full ring-1 ring-white/50 animate-breathe"
-        style={{
-          background:
-            "conic-gradient(from 210deg, var(--violet), var(--plum), var(--burgundy), var(--gold), var(--violet))",
-        }}
-        aria-hidden
-      />
+    <div className="glass-soft mt-2 flex items-center justify-center rounded-[20px] px-4 py-3 lg:justify-start">
       <div className="hidden min-w-0 leading-tight lg:block">
-        <p className="truncate text-sm font-semibold text-foreground">Mycroft</p>
+        <p className="truncate text-lg font-bold text-foreground">Mycroft</p>
         <p className="truncate text-xs text-muted-foreground">AI Assistant</p>
       </div>
+      {/* Compact fallback for the collapsed rail */}
+      <p className="truncate text-base font-bold text-foreground lg:hidden">M</p>
     </div>
   )
 }

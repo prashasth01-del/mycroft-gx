@@ -6,6 +6,7 @@ import { TopBar } from "@/components/topbar/topbar"
 import { ActionBar } from "@/components/action-bar/action-bar"
 import { WorkspaceRouter } from "@/components/layout/workspace-router"
 import { CalendarPanel } from "@/components/calendar-panel/calendar-panel"
+import { WeatherCard } from "@/components/weather/weather-card"
 import { CommandSurfaces } from "@/components/command/command-surfaces"
 import { EnvironmentBackground } from "@/components/environment/environment-background"
 
@@ -29,8 +30,13 @@ function DashboardInner() {
             {isHome && <ActionBar />}
           </main>
 
-          {/* Right column — the calendar summary only accompanies the Home view */}
-          {isHome && <CalendarPanel />}
+          {/* Right column — weather + calendar summary, Home view only */}
+          {isHome && (
+            <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[360px]">
+              <WeatherCard />
+              <CalendarPanel />
+            </div>
+          )}
         </div>
       </div>
 

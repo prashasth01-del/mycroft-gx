@@ -30,22 +30,22 @@ const THEME = {
     ],
   },
   dark: {
-    tint: "#a99fd8",
-    bg: "#0c0b12",
-    ambient: 0.5,
-    // Brighter translucent fill so the body glows instead of going black —
-    // the reference orb is a lit deep-violet volume, not a black ball.
-    fill: "#332c5a",
-    fillIntensity: 2.2,
-    // Thin, elongated, rotated streaks (not big circles) so refraction reads
-    // as flowing internal bands rather than flat discs.
+    tint: "#b9b1e2",
+    bg: "#141222",
+    ambient: 0.85,
+    // Brighter, lighter translucent fill so the body reads as a lit glass
+    // volume — deep but never a dead black ball.
+    fill: "#4a4383",
+    fillIntensity: 3.0,
+    // Cool-only palette (violet → periwinkle → cyan → white) for a true
+    // liquid-glass look. No warm red/gold — those read as cheap plastic.
     formers: [
-      { color: "#9d86ec", intensity: 4.6, position: [-3.5, 3, 2], scale: [7, 0.5, 1], rotation: 0.5 },
-      { color: "#c65872", intensity: 4.0, position: [3.5, -1.5, 2], scale: [7.5, 0.55, 1], rotation: -0.6 },
-      { color: "#f0c48e", intensity: 2.8, position: [2.5, 3, 2.5], scale: [6, 0.4, 1], rotation: 0.9 },
-      { color: "#57a6e2", intensity: 3.0, position: [-3, -3, 1.5], scale: [6.5, 0.45, 1], rotation: -0.4 },
-      { color: "#ffffff", intensity: 2.8, position: [0, 4.5, -1], scale: [6, 0.35, 1], rotation: 0.2 },
-      { color: "#7e6ad6", intensity: 2.4, position: [-1, -1, -3], scale: [6, 0.45, 1], rotation: 1.2 },
+      { color: "#a99cf2", intensity: 4.8, position: [-3.5, 3, 2], scale: [7, 0.5, 1], rotation: 0.5 },
+      { color: "#8ea6f0", intensity: 4.2, position: [3.5, -1.5, 2], scale: [7.5, 0.5, 1], rotation: -0.6 },
+      { color: "#79d3e6", intensity: 3.4, position: [2.5, 3, 2.5], scale: [6, 0.4, 1], rotation: 0.9 },
+      { color: "#5f9fe4", intensity: 3.2, position: [-3, -3, 1.5], scale: [6.5, 0.45, 1], rotation: -0.4 },
+      { color: "#ffffff", intensity: 3.4, position: [0, 4.5, -1], scale: [6, 0.35, 1], rotation: 0.2 },
+      { color: "#9d8ff0", intensity: 2.8, position: [-1, -1, -3], scale: [6, 0.45, 1], rotation: 1.2 },
     ],
   },
 } as const
