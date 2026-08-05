@@ -7,13 +7,15 @@ import { ActionBar } from "@/components/action-bar/action-bar"
 import { WorkspaceRouter } from "@/components/layout/workspace-router"
 import { CalendarPanel } from "@/components/calendar-panel/calendar-panel"
 import { CommandSurfaces } from "@/components/command/command-surfaces"
+import { EnvironmentBackground } from "@/components/environment/environment-background"
 
 function DashboardInner() {
   const { activeNav } = useMycroft()
   const isHome = activeNav === "home"
 
   return (
-    <div className="flex min-h-dvh w-full gap-4 p-4 lg:h-dvh lg:overflow-hidden">
+    <div className="relative flex min-h-dvh w-full gap-4 p-4 lg:h-dvh lg:overflow-hidden">
+      <EnvironmentBackground />
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col gap-4">

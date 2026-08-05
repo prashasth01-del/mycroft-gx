@@ -160,22 +160,80 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(1200px 800px at 18% -10%, rgba(123, 99, 200, 0.16), transparent 60%),
-      radial-gradient(1000px 700px at 100% 0%, rgba(138, 90, 120, 0.14), transparent 55%),
-      radial-gradient(1100px 900px at 90% 110%, rgba(224, 168, 104, 0.12), transparent 55%),
-      radial-gradient(900px 900px at 30% 120%, rgba(154, 42, 66, 0.08), transparent 55%),
-      radial-gradient(circle at 50% 50%, #efedea 0%, #ece8e4 100%);
-    background-attachment: fixed;
+    @apply text-foreground;
+    /* The environment image (EnvironmentBackground, fixed at z-index:-10) is the
+       real backdrop. Body stays transparent so it shows through; html keeps the
+       base color as a fallback. */
+    background-color: transparent;
     min-height: 100vh;
   }
-  .dark body {
-    background-image:
-      radial-gradient(1200px 800px at 18% -10%, rgba(123, 99, 200, 0.22), transparent 60%),
-      radial-gradient(1000px 700px at 100% 0%, rgba(138, 90, 120, 0.18), transparent 55%),
-      radial-gradient(1100px 900px at 90% 110%, rgba(224, 168, 104, 0.12), transparent 55%),
-      radial-gradient(circle at 50% 50%, #1f1c1b 0%, #171514 100%);
+}
+
+@layer components {
+  /* ============================================================
+     ENVIRONMENT — the physical space the glass lives inside.
+     A real photographic backdrop, atmospherically graded per theme.
+     ============================================================ */
+  .env-root {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--background);
+  }
+  .env-image {
+    position: absolute;
+    inset: -5%;
+    background-size: cover;
+    background-position: 50% 42%;
+    transition: opacity 500ms ease;
+    will-change: opacity;
+    transform: translateZ(0);
+  }
+  .env-image--light {
+    background-image: url("/environment-light.png");
+    opacity: 0.5;
+    filter: blur(1px) brightness(1.06) saturate(1.02) contrast(0.96);
+  }
+  .env-image--dark {
+    background-image: url("/environment-dark.jpg");
+    opacity: 0;
+    filter: blur(2px) brightness(0.72) saturate(1.08) contrast(1.02);
+  }
+  .dark .env-image--light {
+    opacity: 0;
+  }
+  .dark .env-image--dark {
+    opacity: 0.62;
+  }
+  /* Color grade + ambient tints so the glass has environmental color to refract.
+     Light stays much quieter than dark. */
+  .env-grade {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(1100px 760px at 16% -8%, rgba(123, 99, 200, 0.1), transparent 60%),
+      radial-gradient(1000px 720px at 102% 4%, rgba(138, 90, 120, 0.09), transparent 55%),
+      radial-gradient(1100px 900px at 88% 112%, rgba(224, 168, 104, 0.08), transparent 55%),
+      linear-gradient(180deg, rgba(239, 237, 234, 0.42), rgba(236, 232, 228, 0.5));
+  }
+  .dark .env-grade {
+    background:
+      radial-gradient(1200px 820px at 16% -8%, rgba(123, 99, 200, 0.2), transparent 60%),
+      radial-gradient(1000px 720px at 102% 2%, rgba(138, 90, 120, 0.16), transparent 55%),
+      radial-gradient(1100px 900px at 88% 112%, rgba(224, 168, 104, 0.1), transparent 55%),
+      radial-gradient(900px 720px at 50% 46%, rgba(12, 11, 10, 0.34), transparent 62%),
+      linear-gradient(180deg, rgba(20, 18, 17, 0.32), rgba(16, 14, 13, 0.46));
+  }
+  /* Vignette — softly darkens edges so image edges never read as a hard crop. */
+  .env-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 120% at 50% 40%, transparent 52%, rgba(214, 209, 202, 0.5) 100%);
+  }
+  .dark .env-vignette {
+    background: radial-gradient(120% 120% at 50% 40%, transparent 46%, rgba(6, 5, 5, 0.6) 100%);
   }
 }
 
