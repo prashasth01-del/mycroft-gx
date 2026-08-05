@@ -32,11 +32,13 @@ import { useMycroft } from "@/components/providers/mycroft-provider"
 import { useTheme } from "@/components/theme-provider"
 import type { AssistantStatus } from "@/types"
 
-const SEG = 148 // samples along the length
+const SEG = 168 // samples along the length
 const RAD = 18 // samples around the cross-section
 const LENGTH = 6.2 // world units — horizontal span
-const V_BASE = 0.56 // baseline vertical semi-axis (thickness)
-const DEPTH = 0.46 // fixed depth semi-axis → believable volume
+const V_BASE = 0.5 // baseline vertical semi-axis (thickness)
+const DEPTH = 0.44 // fixed depth semi-axis → believable volume
+const BARS = 7 // number of "bars" → vertical separations, like a real waveform
+const NECK = 0.14 // how thin the glass necks pinch between bars (0 = separated)
 
 const noise = createNoise3D()
 
@@ -75,6 +77,9 @@ function Sculpture({ analyserRef, dataRef, statusRef, reduced, bg }: SculpturePr
   const amp = useRef(new Float32Array(SEG + 1))
   const vel = useRef(new Float32Array(SEG + 1))
   const tRef = useRef(0)
+  // Per-bar heights (the reactive spectrum) + their velocities for spring easing.
+  const barH = useRef(new Float32Array(BARS))
+  const barV = useRef(new Float32Array(BARS))
 
   // Reusable scratch vectors (no per-frame allocation).
   const scratch = useMemo(() => {
@@ -95,69 +100,74 @@ function Sculpture({ analyserRef, dataRef, statusRef, reduced, bg }: SculpturePr
     const analyser = analyserRef.current
     const data = dataRef.current
 
-    // ---- Audio → three broad bands (low / mid / high) ----
-    let low = 0
-    let mid = 0
-    let high = 0
-    if (analyser && data) {
-      analyser.getByteFrequencyData(data)
-      const n = data.length
-      let ls = 0
-      let lc = 0
-      let ms = 0
-      let mc = 0
-      let hs = 0
-      let hc = 0
-      for (let k = 0; k < n; k++) {
-        const v = data[k] / 255
-        if (k < n * 0.12) {
-          ls += v
-          lc++
-        } else if (k < n * 0.45) {
-          ms += v
-          mc++
-        } else {
-          hs += v
-          hc++
-        }
-      }
-      low = lc ? ls / lc : 0
-      mid = mc ? ms / mc : 0
-      high = hc ? hs / hc : 0
-    }
-
     const active = st !== "standby"
     const thinking = st === "thinking"
     const speaking = st === "speaking"
     const hasAudio = !!(analyser && data)
 
-    // ---- Targets + spring integration (inertia + damping) ----
+    // ---- Audio → per-bar spectrum (bass in the centre, highs toward edges) ----
+    const bh = barH.current
+    const bv = barV.current
+    const center = (BARS - 1) / 2
+    if (analyser && data) analyser.getByteFrequencyData(data)
+    for (let b = 0; b < BARS; b++) {
+      const distN = center === 0 ? 0 : Math.abs(b - center) / center // 0 centre → 1 edge
+      let bt: number
+      if (reduced) {
+        bt = 0.14
+      } else if (hasAudio && data) {
+        // Bass (loudest, most movement) sits in the middle; sweep to highs
+        // at the edges. A curved index gives the classic tapered profile.
+        const n = data.length
+        const lo = Math.floor(distN * distN * n * 0.55)
+        const hi = Math.min(n, lo + Math.max(2, Math.floor(n * 0.06)))
+        let s = 0
+        let c = 0
+        for (let k = lo; k < hi; k++) {
+          s += data[k] / 255
+          c++
+        }
+        const v = c ? s / c : 0
+        // Emphasise the centre, keep the edges lively.
+        bt = 0.12 + v * (1.7 - distN * 0.7)
+      } else {
+        // Idle — each bar breathes on its own slow noise phase.
+        const base = active ? 0.24 : 0.16
+        const amt = active ? 0.2 : 0.12
+        const drift = noise(b * 0.6, t * 0.35, 40) * 0.5 + 0.5
+        bt = base + drift * amt * (1 - distN * 0.35)
+        if (thinking) bt += Math.sin(t * 1.4 + b * 0.9) * 0.05
+        if (speaking) bt += 0.04
+      }
+      if (bt < 0) bt = 0
+      // Snappy spring so bars react quickly, but with enough give to feel liquid.
+      const stiff = 90
+      const fric = reduced ? 60 : 12
+      const f = (bt - bh[b]) * stiff - bv[b] * fric
+      bv[b] += f * dt
+      bh[b] += bv[b] * dt
+    }
+
+    // ---- Per-sample target: smooth (fluid) interpolation across the bars ----
     const a = amp.current
     const vv = vel.current
-    const stiffness = 26
-    const friction = reduced ? 60 : 7.5
+    const stiffness = 42
+    const friction = reduced ? 60 : 8.5
     for (let i = 0; i <= SEG; i++) {
       const u = i / SEG
       let target: number
       if (reduced) {
         target = 0.12
-      } else if (hasAudio) {
-        // Amplitude drives broad swelling; mid adds slow curvature; high adds
-        // very fine ripple. Never mapped to discrete bars.
-        const broad = low * 1.05
-        const curve = mid * 0.5 * Math.sin(u * Math.PI * 3 + t * 0.6)
-        const ripple = high * 0.14 * Math.sin(u * Math.PI * 9 - t * 1.3)
-        const idle = 0.12 + noise(u * 1.4, t * 0.15, 0) * 0.03
-        target = idle + broad + curve + ripple
       } else {
-        // Idle / ambient — slow viscous drift, almost meditative.
-        const drift = noise(u * 1.5, t * 0.16, 0) * 0.5 + 0.5
-        const drift2 = noise(u * 2.6, t * 0.1, 5) * 0.5 + 0.5
-        const base = active ? 0.2 : 0.14
-        const amt = active ? 0.16 : 0.1
-        target = base + drift * amt * 0.7 + drift2 * amt * 0.3
-        if (thinking) target += Math.sin(t * 1.1 + u * Math.PI * 2) * 0.02
-        if (speaking) target += 0.03
+        const p = u * BARS - 0.5
+        const i0 = Math.floor(p)
+        const fr = p - i0
+        const h0 = bh[Math.max(0, Math.min(BARS - 1, i0))]
+        const h1 = bh[Math.max(0, Math.min(BARS - 1, i0 + 1))]
+        const sm = fr * fr * (3 - 2 * fr) // smoothstep → liquid blend, no hard steps
+        target = h0 + (h1 - h0) * sm
+        // A touch of travelling ripple keeps the surface alive and watery.
+        target += noise(u * 3.0, t * 0.5, 12) * 0.03
       }
       if (target < 0) target = 0
       const force = (target - a[i]) * stiffness - vv[i] * friction
@@ -170,7 +180,7 @@ function Sculpture({ analyserRef, dataRef, statusRef, reduced, bg }: SculpturePr
       let prev = a[0]
       for (let i = 1; i < SEG; i++) {
         const cur = a[i]
-        a[i] = cur + (prev + a[i + 1] - 2 * cur) * 0.16
+        a[i] = cur + (prev + a[i + 1] - 2 * cur) * 0.22
         prev = cur
       }
     }
@@ -197,8 +207,13 @@ function Sculpture({ analyserRef, dataRef, statusRef, reduced, bg }: SculpturePr
 
       const u = i / SEG
       const prof = Math.pow(Math.sin(Math.PI * u), 0.72) // taper to soft points
-      const rV = prof * (V_BASE + a[i])
-      const rD = prof * DEPTH
+      // Bar separation: pinch the tube at every bar boundary so it reads as a
+      // string of fused glass bars (a real waveform) instead of one smooth rod.
+      const local = u * BARS - Math.floor(u * BARS) // 0..1 within a bar
+      const lobe = Math.pow(Math.sin(local * Math.PI), 0.4) // fat centre, thin neck
+      const sep = NECK + (1 - NECK) * lobe
+      const rV = prof * (V_BASE + a[i]) * sep
+      const rD = prof * DEPTH * (0.45 + 0.55 * sep)
       const cx = C[i].x
       const cy = C[i].y
       const cz = C[i].z
