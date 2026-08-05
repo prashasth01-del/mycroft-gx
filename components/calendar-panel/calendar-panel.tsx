@@ -40,7 +40,7 @@ export function CalendarPanel() {
   }
 
   return (
-    <aside className="glass flex w-full shrink-0 flex-col gap-5 rounded-[30px] p-6 lg:w-[360px]">
+    <aside className="glass glass-dense flex w-full shrink-0 flex-col gap-5 rounded-[30px] p-6 lg:w-[360px]">
       <MonthGrid
         viewMonth={viewMonth}
         selectedISO={selectedDateISO}

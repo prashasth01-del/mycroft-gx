@@ -40,7 +40,7 @@ export function HomeView() {
   return (
     <section
       aria-label="Assistant"
-      className="glass relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-[30px] px-6 py-8"
+      className="glass glass-hero relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-[30px] px-6 py-8"
     >
       {/* Ambient light behind the orb, responsive to activity */}
       <div

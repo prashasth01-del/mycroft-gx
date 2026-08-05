@@ -101,7 +101,7 @@ export function CalendarWorkspace() {
   const showSidePanel = selectedEvent !== null || creating
 
   return (
-    <section className="glass flex min-h-0 flex-1 flex-col overflow-hidden rounded-[30px] p-5 md:p-6">
+    <section className="glass glass-hero flex min-h-0 flex-1 flex-col overflow-hidden rounded-[30px] p-5 md:p-6">
       {/* Toolbar */}
       <header className="flex flex-wrap items-center justify-between gap-3 pb-4">
         <div className="flex items-center gap-3">

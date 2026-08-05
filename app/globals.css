@@ -114,12 +114,12 @@
   --burgundy: #c15068;
   --gold: #e8bc86;
 
-  --glass: rgba(255, 255, 255, 0.055);
-  --glass-2: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-highlight: rgba(255, 255, 255, 0.14);
-  --glass-lowlight: rgba(0, 0, 0, 0.22);
-  --glass-shadow: rgba(0, 0, 0, 0.5);
+  --glass: rgba(255, 255, 255, 0.07);
+  --glass-2: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.22);
+  --glass-lowlight: rgba(0, 0, 0, 0.3);
+  --glass-shadow: rgba(0, 0, 0, 0.55);
   --state-layer: 150 131 224;
 
   --background: #1a1817;
@@ -238,26 +238,111 @@
 }
 
 @layer components {
-  /* Liquid glass surface — physical layered material */
+  /* ============================================================
+     LIQUID GLASS — a single coherent material, layered like real glass.
+
+     Light model is LOCKED and shared by every surface:
+       · key light from top-left  → bright specular top edge
+       · fill glow pooled top-center → soft internal luminance
+       · thickness at the bottom   → faint dark inset + short contact shadow
+       · lift shadow               → broad, soft, offset down
+
+     Tiers differ only in blur depth, tint strength and shadow spread —
+     never in light direction — so the whole UI feels cut from one sheet.
+     ============================================================ */
   .glass {
-    background: var(--glass);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--glass-highlight) 60%, transparent),
+        transparent 26%
+      ),
+      radial-gradient(
+        140% 90% at 30% 0%,
+        color-mix(in srgb, var(--glass) 100%, white 8%),
+        var(--glass) 60%
+      );
+    backdrop-filter: blur(30px) saturate(185%);
+    -webkit-backdrop-filter: blur(30px) saturate(185%);
     border: 1px solid var(--glass-border);
     box-shadow:
+      /* bright top specular edge (key light) */
       inset 0 1px 0 0 var(--glass-highlight),
-      inset 0 -1px 0 0 var(--glass-lowlight),
-      0 18px 40px -22px var(--glass-shadow);
+      /* thin lateral sheen */
+      inset 1px 0 0 0 color-mix(in srgb, var(--glass-highlight) 40%, transparent),
+      /* base thickness */
+      inset 0 -1px 1px 0 var(--glass-lowlight),
+      /* short contact shadow */
+      0 2px 6px -3px var(--glass-shadow),
+      /* broad lift shadow */
+      0 28px 60px -28px var(--glass-shadow);
   }
+  /* Fill glow — a soft pool of light near the top, painted behind content. */
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(
+      120% 80% at 50% -8%,
+      color-mix(in srgb, var(--glass-highlight) 50%, transparent),
+      transparent 62%
+    );
+    pointer-events: none;
+  }
+
   .glass-soft {
-    background: var(--glass-2);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--glass-highlight) 34%, var(--glass-2)),
+      var(--glass-2) 40%
+    );
+    backdrop-filter: blur(18px) saturate(165%);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
     border: 1px solid var(--glass-border);
     box-shadow:
       inset 0 1px 0 0 var(--glass-highlight),
-      0 8px 20px -16px var(--glass-shadow);
+      inset 0 -1px 1px 0 var(--glass-lowlight),
+      0 12px 26px -20px var(--glass-shadow);
   }
+
+  /* Tier: hero — the largest surfaces (orb stage, calendar workspace).
+     Deepest blur, most lift, faintest tint so content floats clearly. */
+  .glass-hero {
+    backdrop-filter: blur(40px) saturate(190%);
+    -webkit-backdrop-filter: blur(40px) saturate(190%);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-highlight),
+      inset 1px 0 0 0 color-mix(in srgb, var(--glass-highlight) 40%, transparent),
+      inset 0 -1px 1px 0 var(--glass-lowlight),
+      0 2px 8px -3px var(--glass-shadow),
+      0 40px 90px -36px var(--glass-shadow);
+  }
+
+  /* Tier: dense — panels holding lists/grids (calendar summary, workspaces).
+     Slightly higher opacity floor so small text stays legible over busy areas. */
+  .glass-dense {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--glass-highlight) 55%, transparent),
+        transparent 22%
+      ),
+      color-mix(in srgb, var(--glass) 100%, var(--background) 16%);
+  }
+
+  /* Content plate — sits INSIDE glass to guarantee text contrast without
+     making the whole panel opaque. Used behind dense text clusters. */
+  .content-plate {
+    background: color-mix(in srgb, var(--background) 40%, transparent);
+    border-radius: calc(var(--radius) - 12px);
+  }
+
   /* state layers for hover/press using the violet accent */
   .state-layer::before {
     content: "";
