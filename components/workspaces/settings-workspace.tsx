@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Settings, Sun, Moon, Mic, Bell, Shield } from "lucide-react"
+import { Settings, Sun, Moon, Mic, Bell, Shield, Zap, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "@/components/theme-provider"
+import { useMycroft } from "@/components/providers/mycroft-provider"
 import { WorkspaceShell } from "./workspace-shell"
 
 function Toggle({
@@ -62,8 +63,51 @@ function Row({
   )
 }
 
+function ModelSwitch({ model, onChange }: { model: "flash" | "pro"; onChange: (m: "flash" | "pro") => void }) {
+  return (
+    <div className="glass-soft flex items-center gap-0.5 rounded-full p-1">
+      {(["flash", "pro"] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          aria-pressed={model === m}
+          onClick={() => onChange(m)}
+          className={cn(
+            "rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            model === m ? "accent-fill shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {m}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ResetSessionButton({ onReset }: { onReset: () => void }) {
+  const [justReset, setJustReset] = useState(false)
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onReset()
+        setJustReset(true)
+        window.setTimeout(() => setJustReset(false), 1500)
+      }}
+      className={cn(
+        "glass-soft rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        justReset ? "text-emerald-500" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {justReset ? "Done" : "Restart"}
+    </button>
+  )
+}
+
 export function SettingsWorkspace() {
   const { theme, toggleTheme } = useTheme()
+  const { model, setModel, chatModel, setChatModel, resetSession } = useMycroft()
   const isDark = theme === "dark"
   const [wake, setWake] = useState(true)
   const [notify, setNotify] = useState(true)
@@ -96,6 +140,18 @@ export function SettingsWorkspace() {
           </h3>
           <div className="flex flex-col gap-2">
             <Row
+              icon={Zap}
+              title="Voice model"
+              desc="Flash is faster, Pro is more capable — takes effect next session"
+              control={<ModelSwitch model={model} onChange={setModel} />}
+            />
+            <Row
+              icon={Zap}
+              title="Chat model"
+              desc="Flash is faster, Pro reasons more deeply — applies to your next message"
+              control={<ModelSwitch model={chatModel} onChange={setChatModel} />}
+            />
+            <Row
               icon={Mic}
               title="Wake word"
               desc={'Respond to "Hey Mycroft"'}
@@ -112,6 +168,12 @@ export function SettingsWorkspace() {
               title="Private mode"
               desc="Pause memory and history logging"
               control={<Toggle on={privacy} onToggle={() => setPrivacy((v) => !v)} label="Toggle private mode" />}
+            />
+            <Row
+              icon={RotateCcw}
+              title="Restart session"
+              desc="Clear chat and workspace, refresh knowledge and everything else"
+              control={<ResetSessionButton onReset={resetSession} />}
             />
           </div>
         </section>

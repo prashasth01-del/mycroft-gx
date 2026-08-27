@@ -1,11 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, Plus, CalendarDays } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Bell, CalendarDays } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useMycroft } from "@/components/providers/mycroft-provider"
-import { toISODate, REFERENCE_DATE } from "@/lib/mock-data"
+import { toISODate } from "@/lib/mock-data"
 import {
   addDays,
   addMonths,
@@ -21,27 +21,56 @@ import { TimeGrid } from "./time-grid"
 import { AgendaView } from "./agenda-view"
 import { EventDetail } from "./event-detail"
 import { EventCreate } from "./event-create"
-import type { CalendarEvent, CalendarView } from "@/types"
+import { ReminderDetail } from "./reminder-detail"
+import { ReminderCreate } from "./reminder-create"
+import type { CalendarEvent, CalendarView, Reminder } from "@/types"
 
 const VIEWS: CalendarView[] = ["day", "week", "month", "agenda"]
 
 export function CalendarWorkspace() {
-  const { events, addEvent, removeEvent, selectedDateISO, setSelectedDateISO } = useMycroft()
+  const {
+    events,
+    addEvent,
+    removeEvent,
+    reminders,
+    addReminder,
+    toggleReminderDone,
+    selectedDateISO,
+    setSelectedDateISO,
+  } = useMycroft()
   const [view, setView] = useState<CalendarView>("month")
   const [cursor, setCursor] = useState<Date>(() => fromISO(selectedDateISO))
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null)
   const [creating, setCreating] = useState(false)
+  const [creatingReminder, setCreatingReminder] = useState(false)
 
-  // Keep the detail panel in sync if the underlying event is deleted.
+  // Keep the detail panel in sync if the underlying event/reminder is
+  // deleted or toggled elsewhere (e.g. the Sidebar badge triggered a
+  // refresh) out from under it.
   useEffect(() => {
     if (selectedEvent && !events.some((e) => e.id === selectedEvent.id)) {
       setSelectedEvent(null)
     }
   }, [events, selectedEvent])
 
+  useEffect(() => {
+    if (selectedReminder) {
+      const fresh = reminders.find((r) => r.id === selectedReminder.id)
+      if (!fresh) setSelectedReminder(null)
+      else if (fresh !== selectedReminder) setSelectedReminder(fresh)
+    }
+  }, [reminders, selectedReminder])
+
   const goToday = useCallback(() => {
-    setCursor(new Date(REFERENCE_DATE))
-    setSelectedDateISO(toISODate(REFERENCE_DATE))
+    // Was REFERENCE_DATE (lib/mock-data.ts's hardcoded "May 12 2026"
+    // constant) -- same stale-date bug already fixed in
+    // mycroft-provider.tsx's selectedDateISO initializer and in
+    // calendar-panel.tsx's Home card, missed here: clicking "Today" jumped
+    // to May 2026 instead of the real current date.
+    const today = new Date()
+    setCursor(today)
+    setSelectedDateISO(toISODate(today))
   }, [setSelectedDateISO])
 
   const step = useCallback(
@@ -86,7 +115,14 @@ export function CalendarWorkspace() {
       setSelectedDateISO(toISODate(date))
       setCursor(date)
       setSelectedEvent(null)
-      setCreating(false)
+      setSelectedReminder(null)
+      setCreatingReminder(false)
+      // Was setCreating(false) -- clicking a day selected it but never
+      // actually opened anything, so there was no way to create an event
+      // from the month grid itself, only via the toolbar's New event
+      // button. Clicking a day is the natural "make something here"
+      // gesture, so open the create panel for it.
+      setCreating(true)
     },
     [setSelectedDateISO],
   )
@@ -98,7 +134,22 @@ export function CalendarWorkspace() {
     [addEvent],
   )
 
-  const showSidePanel = selectedEvent !== null || creating
+  const handleCreateReminder = useCallback(
+    (content: string, dateISO: string, timeStr: string) => {
+      addReminder(content, dateISO, timeStr)
+    },
+    [addReminder],
+  )
+
+  const handleSelectReminder = useCallback((reminder: Reminder) => {
+    setSelectedReminder(reminder)
+    setSelectedEvent(null)
+    setCreating(false)
+    setCreatingReminder(false)
+  }, [])
+
+  const showSidePanel =
+    selectedEvent !== null || selectedReminder !== null || creating || creatingReminder
 
   return (
     <section className="glass glass-hero flex min-h-0 flex-1 flex-col overflow-hidden rounded-[30px] p-5 md:p-6">
@@ -158,10 +209,26 @@ export function CalendarWorkspace() {
             </button>
           </div>
           <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setCreatingReminder(true)
+              setSelectedReminder(null)
+              setCreating(false)
+              setSelectedEvent(null)
+            }}
+            className="gap-1.5 rounded-full"
+          >
+            <Bell className="size-4" strokeWidth={2} aria-hidden />
+            New reminder
+          </Button>
+          <Button
             size="sm"
             onClick={() => {
               setCreating(true)
               setSelectedEvent(null)
+              setCreatingReminder(false)
+              setSelectedReminder(null)
             }}
             className="accent-fill gap-1.5 rounded-full border-0 shadow-sm hover:opacity-90"
           >
@@ -182,26 +249,51 @@ export function CalendarWorkspace() {
             <MonthView
               cursor={cursor}
               events={events}
+              reminders={reminders}
               onSelectEvent={setSelectedEvent}
+              onSelectReminder={handleSelectReminder}
               onSelectDay={handleSelectDay}
             />
           )}
+          {/* Day/week views stay event-only -- reminders aren't
+              time-blocked, so there's no correct slot to draw them in on
+              a time grid (see reminder-badge.tsx's docstring). They still
+              show in Month and Agenda. */}
           {view === "week" && (
             <TimeGrid days={weekDays} events={events} onSelectEvent={setSelectedEvent} headers />
           )}
           {view === "day" && (
             <TimeGrid days={[cursor]} events={events} onSelectEvent={setSelectedEvent} />
           )}
-          {view === "agenda" && <AgendaView events={events} onSelectEvent={setSelectedEvent} />}
+          {view === "agenda" && (
+            <AgendaView
+              events={events}
+              reminders={reminders}
+              onSelectEvent={setSelectedEvent}
+              onSelectReminder={handleSelectReminder}
+            />
+          )}
         </div>
 
         {showSidePanel && (
           <aside className="glass-soft hidden w-[320px] shrink-0 overflow-y-auto rounded-[24px] p-5 lg:block">
-            {creating ? (
+            {creatingReminder ? (
+              <ReminderCreate
+                dateISO={selectedDateISO}
+                onClose={() => setCreatingReminder(false)}
+                onCreate={handleCreateReminder}
+              />
+            ) : creating ? (
               <EventCreate
                 dateISO={selectedDateISO}
                 onClose={() => setCreating(false)}
                 onCreate={handleCreate}
+              />
+            ) : selectedReminder ? (
+              <ReminderDetail
+                reminder={selectedReminder}
+                onClose={() => setSelectedReminder(null)}
+                onToggleDone={toggleReminderDone}
               />
             ) : selectedEvent ? (
               <EventDetail

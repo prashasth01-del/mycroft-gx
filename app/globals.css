@@ -47,6 +47,9 @@
 
 @theme inline {
   --font-sans: var(--font-suisse), ui-sans-serif, system-ui, sans-serif;
+  /* Workspace tab text content only -- see app/layout.tsx's fraunces font
+     and the font-display utility this generates. */
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
   /* Mycroft ambient accents */
   --color-violet: var(--violet);
   --color-plum: var(--plum);
@@ -63,27 +66,39 @@
   --burgundy: #9a2a42;
   --gold: #e0a868;
 
-  /* Liquid glass material tokens */
-  --glass: rgba(255, 255, 255, 0.56);
-  --glass-2: rgba(255, 255, 255, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.75);
-  --glass-highlight: rgba(255, 255, 255, 0.85);
-  --glass-lowlight: rgba(56, 53, 52, 0.05);
-  --glass-shadow: rgba(56, 53, 52, 0.16);
+  /* Liquid glass material tokens -- opacity kept LOW on purpose. A glass
+     panel this transparent needs the environment behind it (env-image/
+     env-grade/env-vignette below) to carry almost all of the visible
+     color and contrast; the tokens here are only a thin tint + a bright
+     specular edge on top of that, never a wash by themselves. */
+  --glass: rgba(255, 255, 255, 0.22);
+  --glass-2: rgba(255, 255, 255, 0.14);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-highlight: rgba(255, 255, 255, 0.55);
+  --glass-lowlight: rgba(56, 53, 52, 0.08);
+  --glass-shadow: rgba(56, 53, 52, 0.22);
   --state-layer: 123 99 200; /* violet rgb for hover/press overlays */
 
   --background: #efedea;
-  --foreground: #383534;
-  --card: rgba(255, 255, 255, 0.56);
-  --card-foreground: #383534;
+  /* Text tokens darkened further for more contrast/pop against the now-
+     transparent glass (see .dark below for the mirrored lighten pass) --
+     was #383534, still fairly readable but not the crisp, high-contrast
+     text the reference material has over real glass. */
+  --foreground: #1c1917;
+  --card: rgba(255, 255, 255, 0.22);
+  --card-foreground: #1c1917;
   --popover: #f5f3f0;
-  --popover-foreground: #383534;
+  --popover-foreground: #1c1917;
   --primary: #7b63c8;
   --primary-foreground: #ffffff;
   --secondary: rgba(255, 255, 255, 0.5);
-  --secondary-foreground: #383534;
+  --secondary-foreground: #1c1917;
   --muted: rgba(56, 53, 52, 0.05);
-  --muted-foreground: #8a8783;
+  /* Was #8a8783, then #5f5b57 -- darkened again alongside --foreground
+     above so muted labels (weather card's location line, calendar's
+     day-of-week row) keep pace with the rest of the text getting bolder/
+     higher-contrast, not left behind looking comparatively faint. */
+  --muted-foreground: #524e4a;
   --accent: rgba(123, 99, 200, 0.1);
   --accent-foreground: #4b3f7a;
   --destructive: #9a2a42;
@@ -97,7 +112,7 @@
   --chart-5: #8a8783;
   --radius: 1.75rem;
   --sidebar: rgba(255, 255, 255, 0.5);
-  --sidebar-foreground: #383534;
+  --sidebar-foreground: #1c1917;
   --sidebar-primary: #7b63c8;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(123, 99, 200, 0.1);
@@ -123,17 +138,20 @@
   --state-layer: 150 131 224;
 
   --background: #1a1817;
-  --foreground: #ece8e4;
+  /* Lightened alongside light mode's darken pass (see :root above) --
+     more contrast/pop against the dark glass, not just a light-mode-only
+     change. */
+  --foreground: #f7f4f1;
   --card: rgba(255, 255, 255, 0.055);
-  --card-foreground: #ece8e4;
+  --card-foreground: #f7f4f1;
   --popover: #232120;
-  --popover-foreground: #ece8e4;
+  --popover-foreground: #f7f4f1;
   --primary: #9683e0;
   --primary-foreground: #1a1817;
   --secondary: rgba(255, 255, 255, 0.06);
-  --secondary-foreground: #ece8e4;
+  --secondary-foreground: #f7f4f1;
   --muted: rgba(255, 255, 255, 0.06);
-  --muted-foreground: #9d9a96;
+  --muted-foreground: #b6b3ae;
   --accent: rgba(150, 131, 224, 0.16);
   --accent-foreground: #c9bdf0;
   --destructive: #c15068;
@@ -146,7 +164,7 @@
   --chart-4: #e8bc86;
   --chart-5: #9d9a96;
   --sidebar: rgba(255, 255, 255, 0.045);
-  --sidebar-foreground: #ece8e4;
+  --sidebar-foreground: #f7f4f1;
   --sidebar-primary: #9683e0;
   --sidebar-primary-foreground: #1a1817;
   --sidebar-accent: rgba(150, 131, 224, 0.16);
@@ -166,6 +184,10 @@
        base color as a fallback. */
     background-color: transparent;
     min-height: 100vh;
+    /* "A little bolder" -- was the browser default (400) everywhere. One
+       step up reads noticeably crisper over translucent glass without
+       tipping into looking like everything is a heading. */
+    font-weight: 500;
   }
 }
 
@@ -193,8 +215,20 @@
   }
   .env-image--light {
     background-image: url("/environment/new-background.avif");
-    opacity: 0.72;
-    filter: brightness(1.08) saturate(1.06) contrast(0.98);
+    /* The source photo is dark-toned (it's shared with dark mode, which
+       only dims it further). Light mode needs to read as genuinely
+       light/white -- that comes from blending it DOWN against
+       env-root's plain --background (#efedea) via opacity, not from
+       pushing brightness() alone (a linear multiply that either barely
+       lifts a near-black photo or blows out its highlights long before
+       the shadows look "light"). Lower opacity than the original .72 on
+       purpose: enough photo texture to give the glass something real to
+       refract, but the pale background dominates so the page reads
+       light at a glance, the way it did originally -- just without that
+       version's extra flat white wash (removed from env-grade below)
+       crushing all contrast on top of it too. */
+    opacity: 0.5;
+    filter: brightness(1.15) saturate(1.1) contrast(1);
   }
   .env-image--dark {
     background-image: url("/environment/new-background.avif");
@@ -212,11 +246,19 @@
   .env-grade {
     position: absolute;
     inset: 0;
+    /* The old flat linear-gradient wash here (rgba(239,237,234,.42) ->
+       rgba(236,232,228,.5), i.e. ~half-opacity near-white over the
+       WHOLE image) was the single biggest contributor to the "frosted"
+       look -- it was fogging the backdrop before the glass even got a
+       chance to sit on top of it. Color pools stay (they're what gives
+       the glass something to tint toward); the flat wash is gone,
+       replaced by a much lighter, edge-only pass so the center of the
+       image stays clear and detailed. */
     background:
-      radial-gradient(1100px 760px at 16% -8%, rgba(123, 99, 200, 0.1), transparent 60%),
-      radial-gradient(1000px 720px at 102% 4%, rgba(138, 90, 120, 0.09), transparent 55%),
-      radial-gradient(1100px 900px at 88% 112%, rgba(224, 168, 104, 0.08), transparent 55%),
-      linear-gradient(180deg, rgba(239, 237, 234, 0.42), rgba(236, 232, 228, 0.5));
+      radial-gradient(1100px 760px at 16% -8%, rgba(123, 99, 200, 0.12), transparent 60%),
+      radial-gradient(1000px 720px at 102% 4%, rgba(138, 90, 120, 0.1), transparent 55%),
+      radial-gradient(1100px 900px at 88% 112%, rgba(224, 168, 104, 0.1), transparent 55%),
+      linear-gradient(180deg, rgba(239, 237, 234, 0.12), transparent 30%);
   }
   .dark .env-grade {
     background:
@@ -230,7 +272,7 @@
   .env-vignette {
     position: absolute;
     inset: 0;
-    background: radial-gradient(120% 120% at 50% 40%, transparent 52%, rgba(214, 209, 202, 0.5) 100%);
+    background: radial-gradient(120% 120% at 50% 40%, transparent 60%, rgba(214, 209, 202, 0.28) 100%);
   }
   .dark .env-vignette {
     background: radial-gradient(120% 120% at 50% 40%, transparent 46%, rgba(6, 5, 5, 0.6) 100%);

@@ -264,8 +264,18 @@ function Sculpture({ analyserRef, dataRef, statusRef, reduced, bg }: SculpturePr
 }
 
 function EnvRig({ isDark }: { isDark: boolean }) {
-  const fill = isDark ? "#3a2f3f" : "#f2ecef"
-  const fillI = isDark ? 1.7 : 2.3
+  // Light mode's fill color pushed from near-white toward the same dusty
+  // lavender-pink family as `bg` above -- even the "ambient volume" light
+  // was diluting the tinted Lightformers below before this, on top of
+  // originally having a higher intensity than dark mode's too.
+  const fill = isDark ? "#3a2f3f" : "#d9b8cc"
+  // Light mode pushed a second round: the flat/white lights (fill, key,
+  // white catch) now sit BELOW their dark-mode intensities -- the lighter
+  // `bg` above means they need less help staying "visible," so the room
+  // to push is in the tinted lights instead. Pink/violet pushed well past
+  // dark mode's own values to compensate and read just as saturated
+  // despite competing with an inherently lighter overall scene.
+  const fillI = isDark ? 1.7 : 0.9
   return (
     <Environment resolution={256} background={false}>
       {/* Soft enveloping fill — coherent volume, no black voids. */}
@@ -274,7 +284,7 @@ function EnvRig({ isDark }: { isDark: boolean }) {
       {/* Key light — champagne, top-left (one global light direction). */}
       <Lightformer
         form="rect"
-        intensity={isDark ? 3.2 : 4.0}
+        intensity={isDark ? 3.2 : 2.6}
         color="#E8C9A8"
         position={[-5, 5, 3]}
         scale={[8, 3, 1]}
@@ -283,16 +293,17 @@ function EnvRig({ isDark }: { isDark: boolean }) {
       {/* Pink pearlescent fill, lower-right. */}
       <Lightformer
         form="rect"
-        intensity={isDark ? 2.6 : 3.0}
+        intensity={isDark ? 2.6 : 4.2}
         color="#D6A3B8"
         position={[5, -3, 3]}
         scale={[8, 3, 1]}
         rotation={[0, 0, -0.4]}
       />
       {/* Violet rim from behind for depth separation. */}
-      <Lightformer form="rect" intensity={isDark ? 2.2 : 2.0} color="#8E78C9" position={[0, -4, -4]} scale={[10, 3, 1]} />
-      {/* White top catch for the specular edge. */}
-      <Lightformer form="rect" intensity={isDark ? 2.0 : 3.0} color="#ffffff" position={[-2, 6, 0]} scale={[6, 2, 1]} />
+      <Lightformer form="rect" intensity={isDark ? 2.2 : 4.0} color="#8E78C9" position={[0, -4, -4]} scale={[10, 3, 1]} />
+      {/* White top catch for the specular edge -- kept modest so it stays a
+          highlight accent, not another wash competing with the color. */}
+      <Lightformer form="rect" intensity={isDark ? 2.0 : 0.9} color="#ffffff" position={[-2, 6, 0]} scale={[6, 2, 1]} />
     </Environment>
   )
 }
@@ -313,8 +324,14 @@ export function GlassWaveform() {
   const isDark = theme === "dark"
 
   // Colour the glass refracts where there is nothing behind it in the 3D scene
-  // (keeps the body bright and clear instead of sampling black).
-  const bg = useMemo(() => new THREE.Color(isDark ? "#2a2230" : "#f3edf0"), [isDark])
+  // (keeps the body bright and clear instead of sampling black). Light mode's
+  // fallback was near-true-white (#f3edf0) -- fine for "keep it bright," but
+  // MeshTransmissionMaterial samples this as its transmission backdrop, so a
+  // near-white fallback diluted every tinted Lightformer in EnvRig below into
+  // pale pastel instead of visible pink/violet depth. Dusty lavender-pink
+  // keeps light mode reading light while giving the material real color to
+  // transmit, the same way dark mode's dark plum backdrop already does.
+  const bg = useMemo(() => new THREE.Color(isDark ? "#2a2230" : "#c9a8c0"), [isDark])
 
   const analyserRef = useRef<AnalyserNode | null>(null)
   const dataRef = useRef<Uint8Array | null>(null)
@@ -381,7 +398,7 @@ export function GlassWaveform() {
           enableMic()
         }
       }}
-      className="group relative flex w-full max-w-[640px] cursor-pointer items-center justify-center outline-none"
+      className="group relative flex h-full w-full cursor-pointer items-center justify-center outline-none"
     >
       {/* Subtle atmospheric stage — a barely-perceptible contrast falloff so the
           sculpture floats in front of the environment (no visible spotlight). */}
@@ -395,15 +412,32 @@ export function GlassWaveform() {
         }}
       />
 
-      <div className="relative h-[clamp(200px,30vw,320px)] w-full">
+      {/* Was a fixed clamp() sized off viewport width/height percentages
+          (first 60vw, then min(50vh,42vw)) -- both attempts guessed at
+          how much room the sidebar/weather/calendar columns and this
+          section's own padding actually left, and both guesses ended up
+          bigger than the real available space, clipping against the
+          parent's overflow-hidden boundary. h-full/w-full instead fills
+          exactly whatever home-view.tsx's new flex-1 wrapper around this
+          component actually has available -- bounded by real layout
+          math, not an estimate, so it structurally can't overflow. A
+          PerspectiveCamera renders to fill whatever pixel size its
+          container is, so this still reads as "bigger sphere, same
+          framing," not a crop/zoom -- nothing about the Three.js scene/
+          camera/mesh itself changed. */}
+      {/* No max-h/max-w cap anymore -- now that this is bounded by real
+          flex layout (see home-view.tsx), there's no overflow risk left
+          to guard against, so let it use however much space its parent
+          actually has instead of an arbitrary ceiling. */}
+      <div className="relative h-full w-full">
         {mounted && webgl ? (
           <Canvas
             dpr={[1, 1.75]}
             gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
             camera={{ position: [0, 0, 9], fov: 30 }}
           >
-            <ambientLight intensity={isDark ? 0.4 : 0.7} />
-            <directionalLight position={[-4, 5, 4]} intensity={isDark ? 1.1 : 1.5} color="#ffffff" />
+            <ambientLight intensity={isDark ? 0.4 : 0.35} />
+            <directionalLight position={[-4, 5, 4]} intensity={isDark ? 1.1 : 1.0} color="#ffffff" />
             <Sculpture
               analyserRef={analyserRef}
               dataRef={dataRef}

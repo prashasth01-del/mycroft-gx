@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { ChevronRight } from "lucide-react"
-import { REFERENCE_DATE, toISODate, TODAY_ISO } from "@/lib/mock-data"
+import { toISODate } from "@/lib/mock-data"
 import { useMycroft } from "@/components/providers/mycroft-provider"
 import type { AccentKey } from "@/types"
 import { MonthGrid } from "./month-grid"
@@ -16,16 +16,30 @@ const ACCENT_VAR: Record<AccentKey, string> = {
 
 export function CalendarPanel() {
   const { events, setActiveNav, selectedDateISO, setSelectedDateISO } = useMycroft()
-  const [viewMonth, setViewMonth] = useState(
-    () => new Date(REFERENCE_DATE.getFullYear(), REFERENCE_DATE.getMonth(), 1),
-  )
+  // Was seeded from lib/mock-data.ts's REFERENCE_DATE -- a hardcoded "May
+  // 12 2026" constant, same bug mycroft-provider.tsx's selectedDateISO
+  // already had fixed (see that file's own comment) but this component,
+  // being a separate local useState, was missed. Bug report: this card
+  // being a HOME-only component (see dashboard.tsx's isHome gate) means
+  // it fully unmounts every time the user leaves Home and remounts fresh
+  // on return, so this useState initializer re-runs EVERY time -- landing
+  // back on the same stale month on every single tab switch, no matter
+  // where the user had navigated it to.
+  const [viewMonth, setViewMonth] = useState(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  })
 
   const eventDates = useMemo(() => new Set(events.map((e) => e.date)), [events])
 
   const upcoming = useMemo(
     () =>
       [...events]
-        .filter((e) => e.date >= TODAY_ISO)
+        // Same REFERENCE_DATE/TODAY_ISO bug, second instance in this same
+        // file -- filtering against a frozen "May 12 2026" instead of the
+        // real date meant this list could include events already past
+        // (relative to the real today) as "upcoming".
+        .filter((e) => e.date >= toISODate(new Date()))
         .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
         .slice(0, 3),
     [events],

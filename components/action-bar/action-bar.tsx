@@ -28,12 +28,20 @@ const QUICK_ACTIONS: { id: CommandSurface; label: string; icon: LucideIcon }[] =
 ]
 
 export function ActionBar() {
-  const { openCommand, muted, toggleMute } = useMycroft()
+  const { openCommand, muted, toggleMute, sendChat, setActiveNav } = useMycroft()
   const [value, setValue] = useState("")
 
   function submit() {
-    // Any typed prompt routes into the search/command surface.
-    openCommand("search")
+    const clean = value.trim()
+    if (!clean) return
+    // Routes into the SAME text_chat.py backend the Chat tab uses (see
+    // mycroft-provider.tsx's sendChat) -- this used to just open the
+    // command palette's "search" surface and silently discard whatever
+    // was typed, never actually sending it anywhere. Switches to the
+    // Chat tab too, so the streamed reply is visible -- Home has no
+    // message-list surface of its own to show it inline.
+    sendChat(clean)
+    setActiveNav("chat")
     setValue("")
   }
 

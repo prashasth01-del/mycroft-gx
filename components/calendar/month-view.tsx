@@ -4,18 +4,24 @@ import { useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { toISODate } from "@/lib/mock-data"
 import { monthMatrix, WEEKDAYS } from "@/lib/calendar-utils"
+import { dueDateISO } from "@/lib/reminder-utils"
 import { EventChip } from "./event-chip"
-import type { CalendarEvent } from "@/types"
+import { ReminderBadge } from "./reminder-badge"
+import type { CalendarEvent, Reminder } from "@/types"
 
 export function MonthView({
   cursor,
   events,
+  reminders,
   onSelectEvent,
+  onSelectReminder,
   onSelectDay,
 }: {
   cursor: Date
   events: CalendarEvent[]
+  reminders: Reminder[]
   onSelectEvent: (event: CalendarEvent) => void
+  onSelectReminder: (reminder: Reminder) => void
   onSelectDay: (date: Date) => void
 }) {
   const days = useMemo(() => monthMatrix(cursor), [cursor])
@@ -36,6 +42,22 @@ export function MonthView({
     return map
   }, [events])
 
+  // Reminders with no parseable dueAt (voice-created, pre-ISO-8601, or a
+  // malformed one) have no day to place them on -- excluded here, same
+  // "silently excluded, not guessed at" rule tools/proactive_notices.py's
+  // _parse_due_at applies server-side.
+  const remindersByDate = useMemo(() => {
+    const map = new Map<string, Reminder[]>()
+    for (const r of reminders) {
+      const iso = dueDateISO(r.dueAt)
+      if (!iso) continue
+      const list = map.get(iso) ?? []
+      list.push(r)
+      map.set(iso, list)
+    }
+    return map
+  }, [reminders])
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="grid grid-cols-7 border-b border-border/60 pb-2">
@@ -52,6 +74,7 @@ export function MonthView({
             {week.map((day) => {
               const iso = toISODate(day)
               const dayEvents = byDate.get(iso) ?? []
+              const dayReminders = remindersByDate.get(iso) ?? []
               const isToday = iso === todayISO
               const isOutside = day.getMonth() !== month
               return (
@@ -59,7 +82,7 @@ export function MonthView({
                   key={iso}
                   role="button"
                   tabIndex={0}
-                  aria-label={`${day.toDateString()}, ${dayEvents.length} events`}
+                  aria-label={`${day.toDateString()}, ${dayEvents.length} events, ${dayReminders.length} reminders`}
                   onClick={() => onSelectDay(day)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -88,6 +111,14 @@ export function MonthView({
                     {dayEvents.length > 3 && (
                       <span className="px-1.5 text-[10px] font-medium text-muted-foreground">
                         +{dayEvents.length - 3} more
+                      </span>
+                    )}
+                    {dayReminders.slice(0, 2).map((r) => (
+                      <ReminderBadge key={r.id} reminder={r} onSelect={onSelectReminder} />
+                    ))}
+                    {dayReminders.length > 2 && (
+                      <span className="px-1.5 text-[10px] font-medium text-muted-foreground">
+                        +{dayReminders.length - 2} more reminders
                       </span>
                     )}
                   </div>

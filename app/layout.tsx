@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Hanken_Grotesk } from 'next/font/google'
+import { Fraunces, Hanken_Grotesk } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
@@ -9,6 +9,16 @@ import './globals.css'
 const suisse = Hanken_Grotesk({
   subsets: ['latin'],
   variable: '--font-suisse',
+  display: 'swap',
+})
+
+// Workspace-tab-only display serif (see globals.css's --font-display and
+// the font-display utility it generates) -- gives Mycroft-authored text
+// content a more considered, "read this" feel than the app's own UI
+// chrome, which stays on the grotesque sans everywhere else.
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
   display: 'swap',
 })
 
@@ -49,7 +59,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${suisse.variable} bg-background`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${suisse.variable} ${fraunces.variable} bg-background`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

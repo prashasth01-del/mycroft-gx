@@ -1,13 +1,9 @@
 import type {
   CalendarEvent,
   Device,
-  KnowledgeItem,
   Note,
   Task,
 } from "@/types"
-
-// The dashboard defaults to this reference month so the mock schedule lines up.
-export const REFERENCE_DATE = new Date(2026, 4, 12) // May 12 2026
 
 export function toISODate(date: Date): string {
   const y = date.getFullYear()
@@ -15,8 +11,6 @@ export function toISODate(date: Date): string {
   const d = String(date.getDate()).padStart(2, "0")
   return `${y}-${m}-${d}`
 }
-
-export const TODAY_ISO = toISODate(REFERENCE_DATE)
 
 export const events: CalendarEvent[] = [
   {
@@ -143,15 +137,19 @@ export const events: CalendarEvent[] = [
   },
 ]
 
+// Unused by the live app -- mycroft-provider.tsx builds real tasks from
+// local_db.py via toTask(), not this array (see that file's docstring).
+// Left in place since it predates the real-backend wiring and nothing
+// imports it; createdAt/actionableGroup added only to satisfy Task's type.
 export const tasks: Task[] = [
-  { id: "t1", title: "Review Q3 roadmap draft", bucket: "today", priority: "high", due: "Today", done: false },
-  { id: "t2", title: "Approve design system tokens", bucket: "today", priority: "medium", due: "Today", done: false },
-  { id: "t3", title: "Reply to Priya about offsite", bucket: "today", priority: "medium", due: "2:00 PM", done: true },
-  { id: "t4", title: "Draft investor update deck", bucket: "upcoming", priority: "high", due: "Thu", done: false },
-  { id: "t5", title: "Book flights for conference", bucket: "upcoming", priority: "low", due: "Fri", done: false },
-  { id: "t6", title: "Renew domain certificates", bucket: "upcoming", priority: "medium", due: "Next week", done: false },
-  { id: "t7", title: "Read the new agents paper", bucket: "someday", priority: "low", done: false },
-  { id: "t8", title: "Reorganize knowledge base tags", bucket: "someday", priority: "low", done: false },
+  { id: "t1", title: "Review Q3 roadmap draft", bucket: "today", priority: "high", due: "Today", createdAt: "2026-07-28T09:00:00", actionableGroup: null, done: false },
+  { id: "t2", title: "Approve design system tokens", bucket: "today", priority: "medium", due: "Today", createdAt: "2026-07-29T09:00:00", actionableGroup: null, done: false },
+  { id: "t3", title: "Reply to Priya about offsite", bucket: "today", priority: "medium", due: "2:00 PM", createdAt: "2026-07-30T09:00:00", actionableGroup: null, done: true },
+  { id: "t4", title: "Draft investor update deck", bucket: "upcoming", priority: "high", due: "Thu", createdAt: "2026-07-31T09:00:00", actionableGroup: null, done: false },
+  { id: "t5", title: "Book flights for conference", bucket: "upcoming", priority: "low", due: "Fri", createdAt: "2026-08-01T09:00:00", actionableGroup: null, done: false },
+  { id: "t6", title: "Renew domain certificates", bucket: "upcoming", priority: "medium", due: "Next week", createdAt: "2026-08-01T09:00:00", actionableGroup: null, done: false },
+  { id: "t7", title: "Read the new agents paper", bucket: "someday", priority: "low", createdAt: "2026-08-02T09:00:00", actionableGroup: null, done: false },
+  { id: "t8", title: "Reorganize knowledge base tags", bucket: "someday", priority: "low", createdAt: "2026-08-02T09:00:00", actionableGroup: null, done: false },
 ]
 
 export const notes: Note[] = [
@@ -191,16 +189,6 @@ export const notes: Note[] = [
     tag: "Work",
     accent: "plum",
   },
-]
-
-export const knowledge: KnowledgeItem[] = [
-  { id: "k1", title: "Prefers concise, direct answers", kind: "memory", detail: "Learned from 40+ conversations", meta: "Memory" },
-  { id: "k2", title: "Works in Pacific time", kind: "memory", detail: "Schedules default to PT", meta: "Memory" },
-  { id: "k3", title: "Product Requirements — v4", kind: "source", detail: "PDF · 24 pages · indexed", meta: "Source" },
-  { id: "k4", title: "Design System Guidelines", kind: "source", detail: "Notion · synced hourly", meta: "Source" },
-  { id: "k5", title: "Q2 Metrics Dashboard", kind: "source", detail: "Connected · live", meta: "Source" },
-  { id: "k6", title: "The calm technology manifesto", kind: "saved", detail: "Article · saved for later", meta: "Saved" },
-  { id: "k7", title: "Ambient agents research thread", kind: "saved", detail: "12 links · summarized", meta: "Saved" },
 ]
 
 export const devices: Device[] = [
