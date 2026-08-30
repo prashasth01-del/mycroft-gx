@@ -1,6 +1,7 @@
 "use client"
 
-import { Sparkles, ExternalLink } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Sparkles, ExternalLink, LayoutGrid, ArrowLeft } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
@@ -26,6 +27,25 @@ function formatShortDate(iso: string): string {
 // hierarchy, comfortable body line-height, links that open via the system
 // browser instead of navigating this Electron window away from the app.
 const MARKDOWN_COMPONENTS: Components = {
+  // Tables were not styled at all before, so a wide result (a Canvas course
+  // listing with instructors is the case that surfaced it) rendered as
+  // unstyled runs of text and looked truncated. Wrapped in its own
+  // horizontal scroller so a wide table scrolls itself instead of forcing
+  // the whole panel narrow.
+  table: ({ children }) => (
+    <div className="scroll-quiet my-4 w-full overflow-x-auto rounded-xl border border-border">
+      <table className="w-full min-w-[520px] border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead className="bg-[color-mix(in_srgb,var(--violet)_8%,transparent)]">{children}</thead>
+  ),
+  th: ({ children }) => (
+    <th className="border-b border-border px-3 py-2 text-left font-semibold text-foreground">{children}</th>
+  ),
+  td: ({ children }) => (
+    <td className="border-b border-border/60 px-3 py-2 align-top text-foreground">{children}</td>
+  ),
   h1: ({ children }) => (
     <h1 className="font-display mb-3 mt-6 text-2xl font-semibold leading-snug tracking-tight text-foreground first:mt-0">
       {children}
@@ -73,14 +93,20 @@ const MARKDOWN_COMPONENTS: Components = {
 
 function TextCard({ item }: { item: WorkspaceItem }) {
   return (
-    <article className="glass-soft flex w-full flex-col gap-2 rounded-2xl p-6 md:p-8">
+    <article className="flex w-full flex-col gap-2 p-1 md:p-2">
       {item.title ? (
         <h2 className="font-display mb-2 text-xl font-semibold leading-snug tracking-tight text-foreground md:text-2xl">
           {item.title}
         </h2>
       ) : null}
       {item.body ? (
-        <div className="max-w-[70ch]">
+        // No max-w clamp. This used to be max-w-[70ch], which is a fine
+        // measure for prose but wrong for what actually lands here --
+        // wide markdown tables (a Canvas course listing with instructors)
+        // were being squeezed and visually cut off. Tables scroll
+        // horizontally on their own (see MARKDOWN_COMPONENTS' table
+        // wrapper) rather than forcing the whole column narrow.
+        <div className="w-full">
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
             {item.body}
           </ReactMarkdown>
@@ -172,36 +198,143 @@ function AutomationStrip() {
   )
 }
 
+/** One tile in the gallery: enough to recognise a past result, not to read
+ * it. Reading happens in the detail view, which gets the whole panel. */
+function GalleryTile({
+  item,
+  active,
+  onOpen,
+}: {
+  item: WorkspaceItem
+  active: boolean
+  onOpen: () => void
+}) {
+  const preview = (item.body || item.caption || "").replace(/[#*`|>-]/g, " ").trim()
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`glass-soft state-layer flex min-h-[132px] flex-col gap-1.5 rounded-2xl border p-4 text-left transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        active ? "border-violet" : "border-border"
+      }`}
+    >
+      <span className="line-clamp-2 text-sm font-semibold text-foreground">
+        {item.title || (item.kind === "image" ? "Image" : "Result")}
+      </span>
+      {item.kind === "image" && item.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- see ImageCard
+        <img src={item.imageUrl} alt="" className="h-16 w-full rounded-lg object-cover" />
+      ) : (
+        <span className="line-clamp-3 flex-1 text-xs leading-relaxed text-muted-foreground">{preview}</span>
+      )}
+      <span className="text-[11px] text-muted-foreground">{formatShortDate(item.createdAt)}</span>
+    </button>
+  )
+}
+
 export function CanvasWorkspace() {
   const { workspaceItems } = useMycroft()
+  const [showGallery, setShowGallery] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  // Newest by default, and it FOLLOWS new arrivals -- but only while the
+  // user hasn't picked something themselves, so a result landing mid-read
+  // doesn't yank them off what they were looking at.
+  const newestId = workspaceItems[0]?.id ?? null
+  const selected =
+    workspaceItems.find((i) => i.id === selectedId) ?? workspaceItems[0] ?? null
+
+  useEffect(() => {
+    if (selectedId === null) return
+    if (!workspaceItems.some((i) => i.id === selectedId)) setSelectedId(null)
+  }, [workspaceItems, selectedId])
+
+  const count = workspaceItems.length
 
   return (
     <WorkspaceShell
       icon={Sparkles}
       title="Workspace"
       subtitle={
-        workspaceItems.length === 0
+        count === 0
           ? undefined
-          : `${workspaceItems.length} ${workspaceItems.length === 1 ? "item" : "items"}`
+          : showGallery
+            ? `${count} ${count === 1 ? "result" : "results"}`
+            : selected?.title || undefined
+      }
+      action={
+        count > 1 ? (
+          <button
+            type="button"
+            onClick={() => setShowGallery((v) => !v)}
+            className="state-layer flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {showGallery ? (
+              <>
+                <ArrowLeft className="size-3.5" strokeWidth={2} aria-hidden />
+                Back to result
+              </>
+            ) : (
+              <>
+                <LayoutGrid className="size-3.5" strokeWidth={2} aria-hidden />
+                All results ({count})
+              </>
+            )}
+          </button>
+        ) : undefined
       }
     >
       <AutomationStrip />
-      {workspaceItems.length === 0 ? (
+      {count === 0 ? (
         <div className="flex h-full min-h-[240px] flex-col items-center justify-center gap-2 text-center">
           <Sparkles className="size-6 text-muted-foreground/60" strokeWidth={1.5} aria-hidden />
           <p className="text-sm text-muted-foreground">
-            Nothing here yet — ask Mycroft to show you something, or generate an image, and it'll land here.
+            Nothing here yet — ask Mycroft to show you something, or generate an image, and it&apos;ll land here.
           </p>
         </div>
+      ) : showGallery ? (
+        // Gallery: previous results as tiles, newest first. Deliberately a
+        // grid of small tiles rather than the old stacked full cards --
+        // this view is for FINDING a past result, not reading one.
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {workspaceItems.map((item) => (
+            <GalleryTile
+              key={item.id}
+              item={item}
+              active={item.id === selected?.id}
+              onOpen={() => {
+                setSelectedId(item.id)
+                setShowGallery(false)
+              }}
+            />
+          ))}
+        </div>
       ) : (
-        // Single-column vertical stack, newest first -- a long answer reads
-        // as one continuous document (the way Claude's own long responses
-        // do), not chopped into side-by-side masonry cards that force
-        // reading in short, disconnected bursts across columns.
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-          {workspaceItems.map((item) =>
-            item.kind === "image" ? <ImageCard key={item.id} item={item} /> : <TextCard key={item.id} item={item} />,
-          )}
+        // Detail: ONE result using the whole panel.
+        //
+        // Replaces a single scrolling column of stacked cards, each clamped
+        // to max-w-[70ch] inside a max-w-3xl parent. That double constraint
+        // is what made a wide result (a Canvas course table) look cut off,
+        // and it meant the newest answer was competing for space with every
+        // older one. One result at a time, full width; the rest move to the
+        // gallery behind the header button.
+        <div className="flex w-full flex-col">
+          {selected ? (
+            selected.kind === "image" ? (
+              <ImageCard item={selected} />
+            ) : (
+              <TextCard item={selected} />
+            )
+          ) : null}
+          {selectedId && newestId && selectedId !== newestId ? (
+            <button
+              type="button"
+              onClick={() => setSelectedId(null)}
+              className="mt-4 w-fit rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Jump to newest result
+            </button>
+          ) : null}
         </div>
       )}
     </WorkspaceShell>
