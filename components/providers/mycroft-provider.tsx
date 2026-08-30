@@ -79,7 +79,7 @@ import {
   selectChatModel,
   resetSession as resetSessionBackend,
 } from "@/lib/dashboard-bridge"
-import type { RawDocumentItem, RawWorkspaceItem } from "@/lib/dashboard-bridge"
+import type { AutomationTask, RawDocumentItem, RawWorkspaceItem } from "@/lib/dashboard-bridge"
 import { fromISO, parseTime } from "@/lib/calendar-utils"
 import { reminderStatus } from "@/lib/reminder-utils"
 import { looksLikeConfirmationRequest } from "@/lib/chat-utils"
@@ -190,6 +190,8 @@ interface MycroftContextValue {
   // listener registration below. Persists across tab switches since it
   // lives here in the provider, not in the tab's own component state.
   workspaceItems: WorkspaceItem[]
+  /** Live automation queue (Part 7) -- replaced wholesale on each push. */
+  automationTasks: AutomationTask[]
 
   // chat -- real, tools/text_chat.py (see lib/dashboard-bridge.ts's
   // sendChatMessage). Shares memory/RAG/working-context with voice on the
@@ -378,6 +380,9 @@ export function MycroftProvider({ children }: { children: React.ReactNode }) {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([])
   const [facts, setFacts] = useState<KnowledgeFact[]>([])
   const [workspaceItems, setWorkspaceItems] = useState<WorkspaceItem[]>([])
+  // Part 7 automation queue -- whole list replaced per push, see
+  // onAutomationQueue in the bridge subscription below.
+  const [automationTasks, setAutomationTasks] = useState<AutomationTask[]>([])
   const [commandSurface, setCommandSurface] = useState<CommandSurface | null>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatPending, setChatPending] = useState(false)
@@ -421,6 +426,10 @@ export function MycroftProvider({ children }: { children: React.ReactNode }) {
       // a push always represents a brand-new id, so no id collision is
       // possible in practice.
       onWorkspaceItem: (raw) => setWorkspaceItems((prev) => [toWorkspaceItem(raw), ...prev]),
+      // REPLACES rather than appends, unlike onWorkspaceItem above: this is
+      // live running/queued/done status for the automation queue, not an
+      // artifact. Python sends the whole current list on every transition.
+      onAutomationQueue: (tasks) => setAutomationTasks(tasks),
     })
   }, [])
 
@@ -864,6 +873,7 @@ export function MycroftProvider({ children }: { children: React.ReactNode }) {
       documents,
       facts,
       workspaceItems,
+      automationTasks,
       chatMessages,
       chatPending,
       sendChat,

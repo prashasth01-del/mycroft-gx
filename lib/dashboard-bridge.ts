@@ -201,6 +201,17 @@ const STATE_MAP: Record<string, AssistantStatus> = {
   speaking: "speaking",
 }
 
+export interface AutomationTask {
+  id: string
+  intent: string
+  task: string
+  tier: string
+  state: "queued" | "running" | "done" | "failed" | "aborted"
+  detail?: string
+  created_at?: number
+  finished_at?: number
+}
+
 interface BridgeListener {
   onSetState?: (status: AssistantStatus) => void
   onSetModel?: (model: string) => void
@@ -219,6 +230,13 @@ interface BridgeListener {
    * not hypothetical. mycroft-provider.tsx uses this to refetch
    * everything the calendar-daemon connection backs. */
   onCalendarDaemonConnected?: () => void
+  /** Live automation task queue (tools/automation/task_queue.py). An
+   * unsolicited push like onWorkspaceItem, but REPLACING state rather than
+   * appending to it: this is running/queued/done status, not an artifact.
+   * Sent on every transition over calendar_daemon's always-on connection,
+   * so it arrives with no voice session open. A finished task separately
+   * gets one Workspace item as its record. */
+  onAutomationQueue?: (tasks: AutomationTask[]) => void
   /** A new Workspace item was just pushed live (tools/calendar_daemon.py's
    * push_workspace_item) -- unlike every other *Response above, this has
    * no requestId to correlate against; it's an unsolicited push, handled
@@ -631,6 +649,10 @@ export function installDashboardBridge() {
       pending.onDone(payload.error)
     },
     calendarDaemonConnected: () => listener.onCalendarDaemonConnected?.(),
+    automationQueue: (...args) => {
+      const [tasks] = args as unknown as [AutomationTask[]]
+      listener.onAutomationQueue?.(tasks ?? [])
+    },
     // showBrowser/showImage themselves are superseded by workspaceShow
     // above (tools/browser_search.py, tools/hud.py, and tools/image_gen.py
     // all push through calendar_daemon.push_workspace_item now, not

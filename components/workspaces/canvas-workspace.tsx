@@ -120,6 +120,58 @@ function ImageCard({ item }: { item: WorkspaceItem }) {
   )
 }
 
+/** Live automation status (Part 7's UI requirement: running/queued/done
+ * visible on the dashboard, not backend state you have to read a log for).
+ * Sits above the artifact feed rather than inside it -- these rows are
+ * transient status that gets REPLACED wholesale on each push, while the
+ * items below are permanent records; a finished task drops off this strip
+ * and leaves one Workspace item behind. */
+function AutomationStrip() {
+  const { automationTasks } = useMycroft()
+  if (!automationTasks || automationTasks.length === 0) return null
+
+  const live = automationTasks.filter((t) => t.state === "running" || t.state === "queued")
+  const recent = automationTasks.filter((t) => t.state !== "running" && t.state !== "queued").slice(-3)
+  const shown = [...live, ...recent]
+  if (shown.length === 0) return null
+
+  const tone: Record<string, string> = {
+    running: "text-violet",
+    queued: "text-muted-foreground",
+    done: "text-emerald-500",
+    failed: "text-red-500",
+    aborted: "text-amber-500",
+  }
+
+  return (
+    <div className="glass-soft mb-4 rounded-[20px] border border-border p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <Sparkles className="size-4 text-violet" strokeWidth={1.75} aria-hidden />
+        <span className="text-sm font-semibold text-foreground">Automation</span>
+        {live.length > 0 && (
+          <span className="text-xs text-muted-foreground">{live.length} running</span>
+        )}
+      </div>
+      <ul className="flex flex-col gap-2">
+        {shown.map((t) => (
+          <li key={t.id} className="flex items-start gap-3 text-sm">
+            <span className={`w-16 shrink-0 font-medium ${tone[t.state] ?? "text-muted-foreground"}`}>
+              {t.state}
+            </span>
+            <span className="min-w-0 flex-1 text-foreground">
+              <span className="line-clamp-2">{t.task}</span>
+              {t.detail ? (
+                <span className="mt-0.5 block line-clamp-2 text-xs text-muted-foreground">{t.detail}</span>
+              ) : null}
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground">{t.tier}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function CanvasWorkspace() {
   const { workspaceItems } = useMycroft()
 
@@ -133,6 +185,7 @@ export function CanvasWorkspace() {
           : `${workspaceItems.length} ${workspaceItems.length === 1 ? "item" : "items"}`
       }
     >
+      <AutomationStrip />
       {workspaceItems.length === 0 ? (
         <div className="flex h-full min-h-[240px] flex-col items-center justify-center gap-2 text-center">
           <Sparkles className="size-6 text-muted-foreground/60" strokeWidth={1.5} aria-hidden />
